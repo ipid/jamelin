@@ -3,8 +3,14 @@
  */
 package me.ipid.jamelin;
 
+import java.util.*;
+
 public class App {
+    private Stack<Boolean> stack = new Stack<>();
+
     public String getGreeting() {
+        stack.push(true);
+        boolean fuck = stack.pop();
         return "Hello world.";
     }
 
