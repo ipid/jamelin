@@ -14,12 +14,25 @@ repositories {
     jcenter()
 }
 
+generateGrammarSource {
+    maxHeapSize = "512m"
+
+    doLast {
+        println "Copying generated grammar lexer/parser files to main directory."
+        copy {
+            from "${buildDir}/generated-src/antlr/main"
+            into "generated-src/main/java"
+        }
+    }
+}
+
+
 dependencies {
     antlr "org.antlr:antlr4:4.8-1"
 
-    implementation 'com.google.guava:guava:28.1-jre'
-
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+    implementation 'com.google.guava:guava:28.2-jre'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
 }
 
 application {

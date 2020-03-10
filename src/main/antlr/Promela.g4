@@ -1,8 +1,13 @@
 grammar Promela;
 
+@header {
+    package me.ipid.jamelin.thirdparty.antlr;
+}
+
 @lexer::members {
-    // {}: 0, (): 1, []: 2
-    private int bracketDepth[] = new int[3];
+    // (): 0, []: 1
+    private int bracketDepth[] = new int[2];
+    private boolean isDefiningFunction = false;
 
     private void newLeftBracket(int bracket) {
         bracketDepth[bracket]++;
@@ -15,15 +20,20 @@ grammar Promela;
     }
 
     private boolean shouldNewlineEmit() {
-        // 在 {} 当中，且不在 () 与 [] 中
-        return bracketDepth[0] > 0 && bracketDepth[1] <= 0 && bracketDepth[2] <= 0;
+        return
+            // Trying to define a `proctype`
+            isDefiningFunction ||
+            // Neither inside () or inside []
+            (bracketDepth[0] <= 0 && bracketDepth[1] <= 0);
     }
 }
 
 spec
-    : module* EOF
+    : module+ EOF
     ;
 
+// 加入了 inline 以支持 inline 语句块
+// 加入 SIMPLE_DELIMETER，因为程序外面可能会有空行
 module
     : proctype
     | init
@@ -32,54 +42,78 @@ module
     | utype
     | mtype
     | declareList
+    | inline
+    | ltl
+    | SIMPLE_DELIMETER
     ;
 
-/* 注意：所有在 {} 内的规则都必须考虑 NEWLINE 的问题 */
-proctype
-    : active? PROCTYPE IDENTIFIER '(' declareList? ')' priority? enabler? '{' sequence '}'
-    ;
+
+proctype:
+    (
+        ACTIVE delimeter?
+        ('[' constExpr ']')?
+    )? delimeter?
+    PROCTYPE delimeter?
+    IDENTIFIER delimeter?
+    '(' declareList? delimeter?
+     ')' delimeter?
+    priority? delimeter?
+    enabler? delimeter?
+    '{' sequence '}';
 
 init
-    : INIT priority? '{' sequence '}'
+    : INIT delimeter? priority? delimeter? '{' sequence '}'
     ;
 
 never
-    : NEVER '{' sequence '}'
+    : NEVER delimeter? '{' sequence '}'
     ;
 
 trace
-    : TRACE '{' sequence '}'
+    : (TRACE | NOTRACE) delimeter? '{' sequence '}'
     ;
 
 utype
-    : TYPEDEF IDENTIFIER '{' declareList '}'
+    : TYPEDEF delimeter? IDENTIFIER delimeter? '{' declareList '}'
     ;
 
 mtype
-    : MTYPE '='? '{' (delimeter | ',' | IDENTIFIER)* '}'
+    : MTYPE delimeter? (':' delimeter? IDENTIFIER delimeter?)? '='? delimeter? '{' (delimeter | ',' | IDENTIFIER)* '}'
     ;
 
-// declareList 与 sequence 最好采用同样的逻辑，把 declareList 搞清就能搞清 sequence 使用尾后逗号（尾后逗号法）：尾后逗号指 trailing comma
+inline:
+    INLINE delimeter?
+    IDENTIFIER delimeter?
+    '(' (IDENTIFIER | ',')* ')' delimeter?
+    '{' sequence '}';
+
+ltl:
+    LTL delimeter?
+    (IDENTIFIER delimeter?)?
+    '{' .*? '}';
+
+// declareList 与 sequence 最好采用同样的逻辑，把 declareList 搞清就能搞清 sequence
+// 使用尾后逗号（尾后逗号法）：尾后逗号指 trailing comma
+// diff：加入了尾后 delimeter
 declareList
     : delimeter? oneDeclare (delimeter oneDeclare)* delimeter?
     ;
 
 // 本质：也是一条语句
 oneDeclare
-    : VISIBLE? typeName initVar (',' initVar)* ','?
-    ;
-
-active
-    : ACTIVE ('[' constant ']')?
+    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar (',' IDENTIFIER initVar)*
+    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*
     ;
 
 priority
-    : PRIORITY constant
+    : PRIORITY delimeter? constant
     ;
 
 enabler
-    : PROVIDED '(' expr ')'
+    : PROVIDED delimeter? '(' expr ')'
     ;
+
+// 这里把 visible 移到下面去了
 
 sequence
     : delimeter? step (delimeter step)* delimeter?
@@ -90,19 +124,20 @@ step
     ;
 
 initVar
-    : IDENTIFIER ('[' constant ']')? ('=' anyExpr | '=' chanInit)
+    : ('[' constExpr ']')? ('=' anyExpr | '=' chanInit)?
     ;
 
 chanInit
-    : '[' constant ']' OF '{' (delimeter | ',' | typeName)
+    : '[' constExpr ']' OF '{' (delimeter | ',' | typeName)* '}'
     ;
 
 varRef
-    : IDENTIFIER ( '[' anyExpr ']')? ('.' varRef)?
+    : IDENTIFIER ('[' anyExpr ']')? ('.' varRef)?
     ;
 
 send
-    : varRef '!' sendArgs | varRef '!' '!' sendArgs
+    : varRef '!' sendArgs
+    | varRef '!!' sendArgs
     ;
 
 receive
@@ -118,7 +153,8 @@ poll
     ;
 
 sendArgs
-    : argList | anyExpr '(' argList ')'
+    : argList
+    | anyExpr '(' argList ')'
     ;
 
 argList
@@ -142,24 +178,30 @@ assignment
     | varRef '--'
     ;
 
+// 把 step 里的一些东西挪到了这里
 statement
-    : IF choices FI
+    : oneDeclare
+    | XR varRef (',' varRef)*
+    | XS varRef (',' varRef)*
+    | IF choices FI
     | DO choices OD
     | FOR '(' range ')' '{' sequence '}'
     | ATOMIC '{' sequence '}'
     | D_STEP '{' sequence '}'
-    | SELECT '(' range ')'
+    | SELECT '(' varRef ':' expr '..' expr ')'
     | '{' sequence '}'
-    | send
-    | receive
-    | assignment
-//    | ELSE
+// 这里把 else 放到表达式里了
     | BREAK
     | GOTO IDENTIFIER
     | IDENTIFIER ':' delimeter? statement
     | PRINTF '(' STRING (',' argList)? ')'
+    | PRINTM '(' varRef ')'
     | ASSERT expr
     | expr
+    | send
+    | receive
+    | assignment
+    | IDENTIFIER '(' ( expr (',' expr)* ','? )? ')' // 内联调用
     ;
 
 range
@@ -168,18 +210,28 @@ range
     ;
 
 choices
-    : '::' sequence ('::' sequence)*
+    : delimeter? '::' sequence ('::' sequence)*
     ;
 
 anyExpr
     : '(' anyExpr ')'
-    | anyExpr binaryOp anyExpr
-    | UNARY_OP anyExpr
-    | '(' anyExpr '->' anyExpr ':' anyExpr ')'
+    | <assoc=right> ('~' | '-' | '!') anyExpr
+    | anyExpr ('*' | '/' | '%') anyExpr
+    | anyExpr ('+' | '-') anyExpr
+    | anyExpr ('<<' | '>>') anyExpr
+    | anyExpr ('<' | '<=' | '>' | '>=') anyExpr
+    | anyExpr ('==' | '!=') anyExpr
+    | anyExpr '&' anyExpr
+    | anyExpr '^' anyExpr
+    | anyExpr '|' anyExpr
+    | anyExpr '&&' anyExpr
+    | anyExpr '||' anyExpr
+    | <assoc=right> '(' anyExpr '->' anyExpr ':' anyExpr ')'
     | LEN '(' varRef ')'
     | poll
     | varRef
     | constant
+    | ELSE
     | TIMEOUT
     | NP_
     | ENABLED '(' anyExpr ')'
@@ -190,16 +242,24 @@ anyExpr
     | SET_PRIORITY '(' expr ',' expr ')'
     ;
 
-// anyExpr 是 expr 的子集（建议改名为 someExpr）
+// anyExpr 是 expr 的子集；anyExpr 比 expr 少了一个 CHAN_POLL（建议改名为 someExpr）
 expr
     : anyExpr
     | '(' expr ')'
-    | expr ANDOR expr
+    | expr '&&' expr
+    | expr '||' expr
     | CHAN_POLL '(' varRef ')'
     ;
 
-// TODO: 把 else 作为表达式
+constExpr
+    : '(' constExpr ')'
+    | <assoc=right> '-' constExpr
+    | constExpr '*' constExpr
+    | constExpr ('+' | '-') constExpr
+    | constant
+    ;
 
+// TODO: 把 else 作为表达式
 
 /* 几乎相当于词组的语法规则 */
 typeName
@@ -209,24 +269,23 @@ typeName
     | SHORT
     | INT
     | MTYPE
+    | MTYPE ':' IDENTIFIER
     | CHAN
     | IDENTIFIER
     ;
 
 constant
-    : 'true' | 'false' | 'skip' | NUMBER
+    : TRUE_FALSE_SKIP | NUMBER | CHAR_LITERAL
     ;
 
-binaryOp
-    : '+' | '-' | '*' | '/' | '%' | '&' | '^' | '|'
-	| '>' | '<' | '>=' | '<=' | '==' | '!='
-	| '<<' | '>>' | ANDOR;
-
 delimeter
-    : SIMPLE_DELIMETER | '->';
+    : (SIMPLE_DELIMETER | '->')+;
 
 STRING
-    : '"' ('\\"' | ~[\n\\]) '"'
+    : '"' ('\\' . | .)*? '"'
+    ;
+CHAR_LITERAL
+    : '\'' ('\\' . | .) '\''
     ;
 
 /* Compound Keywords */
@@ -236,6 +295,8 @@ VISIBLE
 CHAN_POLL
     : 'full' | 'empty' | 'nfull' | 'nempty'
     ;
+TRUE_FALSE_SKIP
+    : 'true' | 'false' | 'skip';
 
 /* Keywords */
 ACTIVE
@@ -258,9 +319,6 @@ BREAK
     ;
 BYTE
     : 'byte'
-    ;
-C
-    : 'c'
     ;
 CHAN
     : 'chan'
@@ -301,17 +359,29 @@ IN
 INIT
     : 'init'
     ;
+INLINE
+    : 'inline'
+    ;
 INT
     : 'int'
     ;
 LEN
     : 'len'
     ;
+LOCAL
+    : 'local'
+    ;
+LTL
+    : 'ltl'
+    ;
 MTYPE
     : 'mtype'
     ;
 NEVER
     : 'never'
+    ;
+NOTRACE
+    : 'notrace'
     ;
 NP_
     : 'np_'
@@ -325,14 +395,17 @@ OF
 PC_VALUE
     : 'pc_value'
     ;
+PRINT
+    : 'print'
+    ;
 PRINTF
     : 'printf'
     ;
+PRINTM
+    : 'printm'
+    ;
 PRIORITY
     : 'priority'
-    ;
-PROCTYPE
-    : 'proctype'
     ;
 PROVIDED
     : 'provided'
@@ -361,11 +434,19 @@ TYPEDEF
 UNLESS
     : 'unless'
     ;
+UNSIGNED
+    : 'unsigned'
+    ;
 XR
     : 'xr'
     ;
 XS
     : 'xs'
+    ;
+
+/* Special keywords with actions */
+PROCTYPE
+    : 'proctype' { isDefiningFunction = true; }
     ;
 
 NUMBER
@@ -375,41 +456,35 @@ IDENTIFIER
     : [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
-ANDOR
-    : '&&' | '||';
-
-UNARY_OP
-    : '~' | '-' | '!';
-
-L_CURLY_BRACKET
-    : '{' { newLeftBracket(0); }
-    ;
-R_CURLY_BRACKET
-    : '}' { newRightBracket(0); }
-    ;
 L_PARENTHESIS
-    : '(' { newLeftBracket(1); }
+    : '(' { newLeftBracket(0); }
     ;
 R_PARENTHESIS
-    : ')' { newRightBracket(1); }
+    : ')' { newRightBracket(0); }
     ;
 L_SQUARE_BRACKET
-    : '[' { newLeftBracket(2); }
+    : '[' { newLeftBracket(1); }
     ;
 R_SQUARE_BRACKET
-    : ']' { newRightBracket(2); }
+    : ']' { newRightBracket(1); }
+    ;
+L_CURLY_BRACKET
+    : '{' { isDefiningFunction = false; }
     ;
 
 SIMPLE_DELIMETER
     : ([;\n]) ([;\n \t\r])* { if (!shouldNewlineEmit()) { skip(); } }
     ;
 
+/* LTL Symbols */
+LTL_BACKSLASH: '\\';
+
 /* Skips */
 SKIP_WHITESPACE
     : [ \t\r]+ -> skip
     ;
 SKIP_COMMENT_ONELINE
-    : '//' (~'\n')* '\n' -> skip
+    : '//' .*? '\n' -> skip
     ;
 SKIP_COMMENT_MULTILINE
     : '/*' .*? '*/' -> skip
