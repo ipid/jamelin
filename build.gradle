@@ -5,38 +5,35 @@ plugins {
     id 'antlr'
 }
 
+repositories {
+    jcenter()
+}
+
+dependencies {
+    antlr 'org.antlr:antlr4:4.8-1'
+
+    implementation 'com.google.guava:guava:28.2-jre'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-repositories {
-    jcenter()
-}
-
 generateGrammarSource {
-    maxHeapSize = "512m"
-
-    doLast {
-        println "Copying generated grammar lexer/parser files to main directory."
-        copy {
-            from "${buildDir}/generated-src/antlr/main"
-            into "generated-src/main/java"
-        }
-    }
+    arguments += [
+        '-visitor',
+        '-package', 'me.ipid.jamelin.thirdparty.antlr',
+    ]
 }
 
-
-dependencies {
-    antlr "org.antlr:antlr4:4.8-1"
-
-    implementation 'com.google.guava:guava:28.2-jre'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.6.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+compileJava {
+    options.encoding = 'UTF-8'
 }
 
 application {
-    mainClassName = 'me.ipid.jamelin.App'
+    mainClassName = 'me.ipid.jamelin.Main'
 }
 
 test {

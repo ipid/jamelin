@@ -156,5 +156,5 @@ buildNumber.properties
 # Ignore Gradle build output directory
 build/
 
-# ANTLR Plugin
+# Ignore generated sources because they can be generated on my own
 /generated-src/
