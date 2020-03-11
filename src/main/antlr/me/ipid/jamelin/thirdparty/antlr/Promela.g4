@@ -31,16 +31,16 @@ spec
 // 加入了 inline 以支持 inline 语句块
 // 加入 SIMPLE_DELIMETER，因为程序外面可能会有空行
 module
-    : proctype # MODULE_PROCTYPE
-    | init  # MODULE_INIT
-    | never  # MODULE_NEVER
-    | trace  # MODULE_TRACE
-    | utype  # MODULE_UTYPE
-    | mtype  # MODULE_MTYPE
-    | declareList  # MODULE_DECLARE
-    | inline  # MODULE_INLINE
-    | ltl  # MODULE_LTL
-    | SIMPLE_DELIMETER  # MODULE_EMPTY
+    : proctype  # module_Proctype
+    | init  # module_Init
+    | never  # module_Never
+    | trace  # module_Trace
+    | utype  # module_Utype
+    | mtype  # module_Mtype
+    | declareList  # module_DeclareList
+    | inline  # module_Inline
+    | ltl  # module_Ltl
+    | SIMPLE_DELIMETER  # module_Empty
     ;
 
 
@@ -55,18 +55,18 @@ proctype:
      ')' delimeter?
     priority? delimeter?
     enabler? delimeter?
-    '{' sequence '}';
+    statementBlock;
 
 init
-    : INIT delimeter? priority? delimeter? '{' sequence '}'
+    : INIT delimeter? priority? delimeter? statementBlock
     ;
 
 never
-    : NEVER delimeter? '{' sequence '}'
+    : NEVER delimeter? statementBlock
     ;
 
 trace
-    : (TRACE | NOTRACE) delimeter? '{' sequence '}'
+    : (TRACE | NOTRACE) delimeter? statementBlock
     ;
 
 utype
@@ -81,7 +81,7 @@ inline:
     INLINE delimeter?
     IDENTIFIER delimeter?
     '(' (IDENTIFIER | ',')* ')' delimeter?
-    '{' sequence '}';
+    statementBlock;
 
 ltl:
     LTL delimeter?
@@ -97,8 +97,8 @@ declareList
 
 // 本质：也是一条语句
 oneDeclare
-    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar (',' IDENTIFIER initVar)*
-    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*
+    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar (',' IDENTIFIER initVar)*  # oneDeclare_Normal
+    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*  # oneDeclare_Unsigned
     ;
 
 priority
@@ -132,25 +132,25 @@ varRef
     ;
 
 send
-    : varRef '!' sendArgs
-    | varRef '!!' sendArgs
+    : varRef '!' sendArgs  # send_Fifo
+    | varRef '!!' sendArgs  # send_Insert
     ;
 
 receive
-    : varRef '?' recvArgs
-    | varRef '??' recvArgs
-    | varRef '?' '<' recvArgs '>'
-    | varRef '??' '<' recvArgs '>'
+    : varRef '?' recvArgs  # receive_Fifo
+    | varRef '??' recvArgs  # receive_Random
+    | varRef '?' '<' recvArgs '>'  # receive_PollFifo
+    | varRef '??' '<' recvArgs '>'  # receive_PollRandom
     ;
 
 poll
-    : varRef '?' '[' recvArgs ']'
-    | varRef '??' '[' recvArgs ']'
+    : varRef '?' '[' recvArgs ']'  # poll_Fifo
+    | varRef '??' '[' recvArgs ']'  # poll_Random
     ;
 
 sendArgs
-    : argList
-    | anyExpr '(' argList ')'
+    : argList  # sendArgs_Normal
+    | anyExpr '(' argList ')'  # sendArgs_WithType
     ;
 
 argList
@@ -158,51 +158,55 @@ argList
     ;
 
 recvArgs
-    : recvArgItem (',' recvArgItem)* ','?
-    | recvArgItem '(' recvArgs ')'
+    : recvArgItem (',' recvArgItem)* ','?  # recvArgs_Normal
+    | recvArgItem '(' recvArgs ')'  # recvArgs_WithBracket
     ;
 
 recvArgItem
-    : varRef
-    | EVAL '(' varRef ')'
-    | '-'? constant
+    : varRef  # recvArgItem_VarRef
+    | EVAL '(' varRef ')'  # recvArgItem_Eval
+    | '-'? constant  # recvArgItem_Constant
     ;
 
 assignment
-    : varRef '=' anyExpr
-    | varRef '++'
-    | varRef '--'
+    : varRef '=' anyExpr  # assignment_Normal
+    | varRef '++'  # assignment_Increase
+    | varRef '--'  # assignment_Decrease
+    ;
+
+statementBlock
+    : '{' sequence '}'
     ;
 
 // 把 step 里的一些东西挪到了这里
 statement
-    : oneDeclare
-    | XR varRef (',' varRef)*
-    | XS varRef (',' varRef)*
-    | IF choices FI
-    | DO choices OD
-    | FOR delimeter? '(' range ')' delimeter? '{' sequence '}'
-    | ATOMIC delimeter? '{' sequence '}'
-    | D_STEP delimeter? '{' sequence '}'
-    | SELECT delimeter? '(' varRef ':' expr '..' expr ')'
-    | '{' sequence '}'
+    : oneDeclare  # statement_OneDeclare
+    | XR varRef (',' varRef)*  # statement_Xr
+    | XS varRef (',' varRef)*  # statement_Xs
+    | IF choices FI  # statement_If
+    | DO choices OD  # statement_Do
+    | FOR delimeter? '(' range ')' delimeter? statementBlock  # statement_For
+    | ATOMIC delimeter? statementBlock  # statement_Atomic
+    | D_STEP delimeter? statementBlock  # statement_Dstep
+    | SELECT delimeter? '(' varRef ':' expr '..' expr ')'  # statement_Select
+    | statementBlock  # statement_Compound
 // 这里把 else 放到表达式里了
-    | BREAK
-    | GOTO IDENTIFIER
-    | IDENTIFIER ':' delimeter? statement
-    | PRINTF delimeter? '(' STRING (',' argList)? ')'
-    | PRINTM delimeter? '(' varRef ')'
-    | ASSERT delimeter? expr
-    | expr
-    | send
-    | receive
-    | assignment
-    | IDENTIFIER '(' ( expr (',' expr)* ','? )? ')' // 内联调用
+    | BREAK  # statement_Break
+    | GOTO IDENTIFIER  # statement_Goto
+    | IDENTIFIER ':' delimeter? statement  # statement_Labeled
+    | PRINTF delimeter? '(' STRING (',' argList)? ')'  # statement_Printf
+    | PRINTM delimeter? '(' varRef ')'  # statement_Printm
+    | ASSERT delimeter? expr  # statement_Assert
+    | expr  # statement_Expr
+    | send  # statement_Send
+    | receive  # statement_Receive
+    | assignment  # statement_Assign
+    | IDENTIFIER '(' ( expr (',' expr)* ','? )? ')'  # statement_CallInline
     ;
 
 range
-    : varRef ':' expr '..' expr
-    | varRef IN varRef
+    : varRef ':' expr '..' expr  # range_Numeric
+    | varRef IN varRef  # range_Iterate
     ;
 
 choices
@@ -210,52 +214,50 @@ choices
     ;
 
 anyExpr
-    : '(' anyExpr ')'
-    | <assoc=right> ('~' | '-' | '!') delimeter? anyExpr
-    | anyExpr ('*' | '/' | '%') delimeter? anyExpr
-    | anyExpr ('+' | '-') delimeter? anyExpr
-    | anyExpr ('<<' | '>>') delimeter? anyExpr
-    | anyExpr ('<' | '<=' | '>' | '>=') delimeter? anyExpr
-    | anyExpr ('==' | '!=') delimeter? anyExpr
-    | anyExpr '&' delimeter? anyExpr
-    | anyExpr '^' delimeter? anyExpr
-    | anyExpr '|' delimeter? anyExpr
-    | anyExpr '&&' delimeter? anyExpr
-    | anyExpr '||' delimeter? anyExpr
-    | <assoc=right> '(' anyExpr '->' anyExpr ':' anyExpr ')'
-    | LEN '(' varRef ')'
-    | poll
-    | varRef
-    | constant
-    | ELSE
-    | TIMEOUT
-    | NP_
-    | ENABLED '(' anyExpr ')'
-    | PC_VALUE '(' anyExpr ')'
-    | IDENTIFIER '[' anyExpr ']' '@' IDENTIFIER
-    | RUN IDENTIFIER '(' argList? ')' priority?
-    | GET_PRIORITY '(' expr ')'
-    | SET_PRIORITY '(' expr ',' expr ')'
+    : '(' anyExpr ')'  # anyExpr_Compound
+    | <assoc=right> ('~' | '-' | '!') delimeter? anyExpr  # anyExpr_Unary
+    | anyExpr ('*' | '/' | '%') delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr ('+' | '-') delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr ('<<' | '>>') delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr ('<' | '<=' | '>' | '>=') delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr ('==' | '!=') delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr '&' delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr '^' delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr '|' delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr '&&' delimeter? anyExpr  # anyExpr_Binary
+    | anyExpr '||' delimeter? anyExpr  # anyExpr_Binary
+    | <assoc=right> '(' anyExpr '->' anyExpr ':' anyExpr ')'  # anyExpr_Ternary
+    | LEN '(' varRef ')'  # anyExpr_Len
+    | poll  # anyExpr_Poll
+    | varRef  # anyExpr_VarRef
+    | constant  # anyExpr_Constant
+    | ELSE  # anyExpr_Else
+    | TIMEOUT  # anyExpr_Timeout
+    | NP_  # anyExpr_Np_
+    | ENABLED '(' anyExpr ')'  # anyExpr_Enabled
+    | PC_VALUE '(' anyExpr ')'  # anyExpr_PcValue
+    | IDENTIFIER '[' anyExpr ']' '@' IDENTIFIER  # anyExpr_RemoteRef
+    | RUN IDENTIFIER '(' argList? ')' priority?  # anyExpr_Run
+    | GET_PRIORITY '(' expr ')'  # anyExpr_GetPriority
+    | SET_PRIORITY '(' expr ',' expr ')'  # anyExpr_SetPriority
     ;
 
 // anyExpr 是 expr 的子集；anyExpr 比 expr 少了一个 CHAN_POLL（建议改名为 someExpr）
 expr
-    : anyExpr
-    | '(' expr ')'
-    | expr '&&' delimeter? expr
-    | expr '||' delimeter? expr
-    | CHAN_POLL '(' varRef ')'
+    : anyExpr  # expr_AnyExpr
+    | '(' expr ')'  # expr_Compound
+    | expr '&&' delimeter? expr  # expr_Binary
+    | expr '||' delimeter? expr  # expr_Binary
+    | CHAN_POLL '(' varRef ')'  # expr_ChanPoll
     ;
 
 constExpr
-    : '(' constExpr ')'
-    | <assoc=right> '-' constExpr
-    | constExpr '*' constExpr
-    | constExpr ('+' | '-') constExpr
-    | constant
+    : '(' constExpr ')'  # constExpr_Compound
+    | <assoc=right> '-' constExpr  # constExpr_Unary
+    | constExpr '*' constExpr  # constExpr_Binary
+    | constExpr ('+' | '-') constExpr  # constExpr_Binary
+    | constant  # constExpr_Constant
     ;
-
-// TODO: 把 else 作为表达式
 
 /* 几乎相当于词组的语法规则 */
 typeName
@@ -271,7 +273,9 @@ typeName
     ;
 
 constant
-    : TRUE_FALSE_SKIP | NUMBER | CHAR_LITERAL
+    : TRUE_FALSE_SKIP
+    | NUMBER
+    | CHAR_LITERAL
     ;
 
 delimeter
