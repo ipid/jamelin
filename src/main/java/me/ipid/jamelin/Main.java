@@ -7,6 +7,8 @@ import com.google.common.base.Charsets;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
 import me.ipid.jamelin.compiler.JamelinErrorListener;
+import me.ipid.jamelin.compiler.ProgramVisitor;
+import me.ipid.jamelin.exception.JamelinRuntimeException;
 import me.ipid.jamelin.thirdparty.antlr.PromelaLexer;
 import me.ipid.jamelin.thirdparty.antlr.PromelaParser;
 import org.antlr.v4.runtime.*;
@@ -24,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            out.println("请输入文件路径。");
+            out.println("[ERROR] 请输入文件路径。");
             System.exit(1);
         }
 
@@ -40,28 +42,22 @@ public class Main {
         // 读入文件内容
         String content = readFile(filePath);
 
-        // 初始化 ANTLR 的一系列类
-        CharStream stream = (CharStream) CharStreams.fromString(content);
-        PromelaLexer lexer = new PromelaLexer(stream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        PromelaParser parser = new PromelaParser(tokens);
+        // 生成解析树
+        PromelaParser.SpecContext tree = getParseTree(content);
 
-        // 改变 ANTLR 的错误识别逻辑
-        lexer.removeErrorListeners();
-        parser.removeErrorListeners();
-
-        JamelinErrorListener errorListener = new JamelinErrorListener();
-        lexer.addErrorListener(errorListener);
-        parser.addErrorListener(errorListener);
-
-        PromelaParser.SpecContext tree = parser.spec();
-        if (errorListener.isErrorHappened()) {
-            out.println("[ERROR] 文件语法错误。");
-        }
-
-        // 读入
+        // 打印解析树结构
+        out.println("[INFO] 遍历解析树...");
         out.println(tree.getClass().getName());
         traverseParseTree(1, tree);
+
+        // 使用 Visitor 生成状态图
+        ProgramVisitor visitor = new ProgramVisitor();
+
+        try {
+            visitor.visit(tree);
+        } catch (JamelinRuntimeException e) {
+            System.out.printf("[ERROR] %s", e.getMessage());
+        }
     }
 
     private String readFile(String filePath) {
@@ -69,7 +65,7 @@ public class Main {
 
         // 如果文件大小大于 16M
         if (file.length() > 16 * 1024 * 1024) {
-            out.println("错误：文件过大。");
+            out.println("[ERROR] 文件过大。");
             System.exit(1);
         }
 
@@ -79,7 +75,7 @@ public class Main {
         try {
             content = charSource.read();
         } catch (IOException ioe) {
-            out.println("错误：读取文件时发生错误。");
+            out.println("[ERROR] 读取文件时发生错误。");
             System.exit(1);
         }
 
@@ -108,5 +104,30 @@ public class Main {
                 traverseParseTree(k + 1, context);
             }
         }
+    }
+
+    private PromelaParser.SpecContext getParseTree(String content) {
+        // 初始化 ANTLR 的一系列类
+        CharStream stream = (CharStream) CharStreams.fromString(content);
+        PromelaLexer lexer = new PromelaLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        PromelaParser parser = new PromelaParser(tokens);
+
+        // 改变 ANTLR 的错误识别逻辑
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+
+        JamelinErrorListener errorListener = new JamelinErrorListener();
+        lexer.addErrorListener(errorListener);
+        parser.addErrorListener(errorListener);
+
+        // 生成解析树
+        PromelaParser.SpecContext tree = parser.spec();
+        if (errorListener.isErrorHappened()) {
+            out.println("[ERROR] 文件语法错误。");
+            System.exit(1);
+        }
+
+        return tree;
     }
 }
