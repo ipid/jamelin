@@ -158,3 +158,6 @@ build/
 
 # Ignore generated sources because they can be generated on my own
 /generated-src/
+
+# ANTLR Plugin
+**/.antlr/

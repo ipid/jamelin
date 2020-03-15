@@ -1,6 +1,7 @@
 package me.ipid.jamelin.entity;
 
 import me.ipid.jamelin.constant.PromelaType;
+import me.ipid.jamelin.entity.PromelaTypeInfo;
 
 public class SymbolicTableItem {
 

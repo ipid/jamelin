@@ -1,4 +1,4 @@
-grammar Promela;
+grammar PromelaAntlr;
 
 @lexer::members {
     // (): 0, []: 1
@@ -97,12 +97,12 @@ declareList
 
 // 本质：也是一条语句
 oneDeclare
-    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar (',' IDENTIFIER initVar)*  # oneDeclare_Normal
-    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*  # oneDeclare_Unsigned
+    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar? (',' IDENTIFIER initVar?)*  # oneDeclare_Normal
+    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar? (',' IDENTIFIER ':' NUMBER initVar?)*  # oneDeclare_Unsigned
     ;
 
 priority
-    : PRIORITY delimeter? constant
+    : PRIORITY delimeter? constExpr
     ;
 
 enabler
@@ -120,8 +120,18 @@ step
     ;
 
 initVar
-    : ('[' constExpr ']')? ('=' anyExpr | '=' chanInit)?
+    : '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
+    | '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
+    | '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
+    | '[' constExpr ']'  # initVar_Array
+    | '=' anyExpr  # initVar_AnyExpr
+    | '=' chanInit  # initVar_ChanInit
     ;
+
+initializerList
+    : '{' delimeter? anyExpr 
+            (delimeter? ',' delimeter? anyExpr)* delimeter?
+            (',' delimeter?)? '}';
 
 chanInit
     : '[' constExpr ']' OF '{' (delimeter | ',' | typeName)* '}'
@@ -163,13 +173,15 @@ recvArgs
     ;
 
 recvArgItem
-    : varRef  # recvArgItem_VarRef
-    | EVAL '(' varRef ')'  # recvArgItem_Eval
-    | '-'? constant  # recvArgItem_Constant
+    : PREDEF_WRITEONLY  # recvArgItem_WriteOnly
+    | varRef  # recvArgItem_VarRef
+    | EVAL '(' anyExpr ')'  # recvArgItem_Eval
+    | '-'? constExpr  # recvArgItem_Constant
     ;
 
 assignment
     : varRef '=' anyExpr  # assignment_Normal
+    | PREDEF_WRITEONLY '=' anyExpr  # assignment_Dummy
     | varRef '++'  # assignment_Increase
     | varRef '--'  # assignment_Decrease
     ;
@@ -214,7 +226,8 @@ choices
     ;
 
 anyExpr
-    : '(' anyExpr ')'  # anyExpr_Compound
+    : constExpr  # anyExpr_Constant
+    | '(' anyExpr ')'  # anyExpr_Compound
     | <assoc=right> ('~' | '-' | '!') delimeter? anyExpr  # anyExpr_Unary
     | anyExpr ('*' | '/' | '%') delimeter? anyExpr  # anyExpr_Binary
     | anyExpr ('+' | '-') delimeter? anyExpr  # anyExpr_Binary
@@ -230,10 +243,12 @@ anyExpr
     | LEN '(' varRef ')'  # anyExpr_Len
     | poll  # anyExpr_Poll
     | varRef  # anyExpr_VarRef
-    | constant  # anyExpr_Constant
-    | ELSE  # anyExpr_Else
-    | TIMEOUT  # anyExpr_Timeout
-    | NP_  # anyExpr_Np_
+    | ELSE  # anyExpr_PredefVar
+    | TIMEOUT  # anyExpr_PredefVar
+    | NP_  # anyExpr_PredefVar
+    | PREDEF_PID  # anyExpr_PredefVar
+    | PREDEF_LAST  # anyExpr_PredefVar
+    | PREDEF_NR_PR  # anyExpr_PredefVar
     | ENABLED '(' anyExpr ')'  # anyExpr_Enabled
     | PC_VALUE '(' anyExpr ')'  # anyExpr_PcValue
     | IDENTIFIER '[' anyExpr ']' '@' IDENTIFIER  # anyExpr_RemoteRef
@@ -253,10 +268,13 @@ expr
 
 constExpr
     : '(' constExpr ')'  # constExpr_Compound
-    | <assoc=right> '-' constExpr  # constExpr_Unary
-    | constExpr '*' constExpr  # constExpr_Binary
-    | constExpr ('+' | '-') constExpr  # constExpr_Binary
-    | constant  # constExpr_Constant
+    | <assoc=right> '-' delimeter? constExpr  # constExpr_Unary
+    | constExpr '*' delimeter? constExpr  # constExpr_Binary
+    | constExpr ('+' | '-') delimeter? constExpr  # constExpr_Binary
+    | TRUE_SKIP  # constExpr_True
+    | FALSE  # constExpr_False
+    | NUMBER  # constExpr_Number
+    | CHAR_LITERAL  # constExpr_CharLiteral
     ;
 
 /* 几乎相当于词组的语法规则 */
@@ -264,41 +282,29 @@ typeName
     : BIT
     | BOOL
     | BYTE
-    | SHORT
+    | CHAN
+    | IDENTIFIER
     | INT
     | MTYPE
     | MTYPE ':' IDENTIFIER
-    | CHAN
-    | IDENTIFIER
-    ;
-
-constant
-    : TRUE_FALSE_SKIP
-    | NUMBER
-    | CHAR_LITERAL
+    | PID
+    | SHORT
     ;
 
 delimeter
     : (SIMPLE_DELIMETER | '->')+;
 
-STRING
-    : '"' ('\\' . | .)*? '"'
-    ;
-CHAR_LITERAL
-    : '\'' ('\\' . | .) '\''
-    ;
-
-/* Compound Keywords */
+/* 复合关键字 */
 VISIBLE
     : 'show' | 'hidden'
     ;
 CHAN_POLL
     : 'full' | 'empty' | 'nfull' | 'nempty'
     ;
-TRUE_FALSE_SKIP
-    : 'true' | 'false' | 'skip';
+TRUE_SKIP
+    : 'true' | 'skip';
 
-/* Keywords */
+/* 关键字（自动生成） */
 ACTIVE
     : 'active'
     ;
@@ -337,6 +343,9 @@ ENABLED
     ;
 EVAL
     : 'eval'
+    ;
+FALSE
+    : 'false'
     ;
 FI
     : 'fi'
@@ -395,8 +404,20 @@ OF
 PC_VALUE
     : 'pc_value'
     ;
-PRINT
-    : 'print'
+PID
+    : 'pid'
+    ;
+PREDEF_LAST
+    : '_last'
+    ;
+PREDEF_NR_PR
+    : '_nr_pr'
+    ;
+PREDEF_PID
+    : '_pid'
+    ;
+PREDEF_WRITEONLY
+    : '_'
     ;
 PRINTF
     : 'printf'
@@ -454,6 +475,14 @@ NUMBER
     ;
 IDENTIFIER
     : [a-zA-Z_] [a-zA-Z0-9_]*
+    ;
+
+/* 特殊符号 */
+STRING
+    : '"' ('\\' . | .)*? '"'
+    ;
+CHAR_LITERAL
+    : '\'' ('\\' . | .) '\''
     ;
 
 L_PARENTHESIS

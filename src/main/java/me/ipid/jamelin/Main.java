@@ -9,8 +9,8 @@ import com.google.common.io.Files;
 import me.ipid.jamelin.compiler.JamelinErrorListener;
 import me.ipid.jamelin.compiler.ProgramVisitor;
 import me.ipid.jamelin.exception.JamelinRuntimeException;
-import me.ipid.jamelin.thirdparty.antlr.PromelaLexer;
-import me.ipid.jamelin.thirdparty.antlr.PromelaParser;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -43,7 +43,7 @@ public class Main {
         String content = readFile(filePath);
 
         // 生成解析树
-        PromelaParser.SpecContext tree = getParseTree(content);
+        PromelaAntlrParser.SpecContext tree = getParseTree(content);
 
         // 打印解析树结构
         out.println("[INFO] 遍历解析树...");
@@ -56,7 +56,7 @@ public class Main {
         try {
             visitor.visit(tree);
         } catch (JamelinRuntimeException e) {
-            System.out.printf("[ERROR] %s", e.getMessage());
+            System.out.printf("[ERROR] 语法错误：%s", e.getMessage());
         }
     }
 
@@ -106,12 +106,12 @@ public class Main {
         }
     }
 
-    private PromelaParser.SpecContext getParseTree(String content) {
+    private PromelaAntlrParser.SpecContext getParseTree(String content) {
         // 初始化 ANTLR 的一系列类
         CharStream stream = (CharStream) CharStreams.fromString(content);
-        PromelaLexer lexer = new PromelaLexer(stream);
+        PromelaAntlrLexer lexer = new PromelaAntlrLexer(stream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        PromelaParser parser = new PromelaParser(tokens);
+        PromelaAntlrParser parser = new PromelaAntlrParser(tokens);
 
         // 改变 ANTLR 的错误识别逻辑
         lexer.removeErrorListeners();
@@ -122,9 +122,9 @@ public class Main {
         parser.addErrorListener(errorListener);
 
         // 生成解析树
-        PromelaParser.SpecContext tree = parser.spec();
+        PromelaAntlrParser.SpecContext tree = parser.spec();
         if (errorListener.isErrorHappened()) {
-            out.println("[ERROR] 文件语法错误。");
+            out.println("[ERROR] 语法错误。");
             System.exit(1);
         }
 
