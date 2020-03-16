@@ -6,18 +6,18 @@ package me.ipid.jamelin;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
-import me.ipid.jamelin.compiler.JamelinErrorListener;
+import me.ipid.jamelin.compiler.ErrorListener;
 import me.ipid.jamelin.compiler.ProgramVisitor;
 import me.ipid.jamelin.exception.JamelinRuntimeException;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
-
-import static java.lang.System.out;
 
 /**
  * 程序的主入口。
@@ -26,12 +26,14 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            out.println("[ERROR] 请输入文件路径。");
+            logger.error("请输入文件路径");
             System.exit(1);
         }
 
         new Main().run(args[0]);
     }
+
+    private static final Logger logger = LogManager.getLogger(Main.class);
 
     /**
      * Main 类的主入口。
@@ -39,24 +41,18 @@ public class Main {
      * @param filePath Promela 文件的路径
      */
     private void run(String filePath) {
-        // 读入文件内容
+        logger.debug("读入文件内容");
         String content = readFile(filePath);
 
-        // 生成解析树
+        logger.debug("生成解析树");
         PromelaAntlrParser.SpecContext tree = getParseTree(content);
 
-        // 打印解析树结构
-        out.println("[INFO] 遍历解析树...");
-        out.println(tree.getClass().getName());
-        traverseParseTree(1, tree);
-
-        // 使用 Visitor 生成状态图
+        logger.debug("生成状态图");
         ProgramVisitor visitor = new ProgramVisitor();
-
         try {
             visitor.visit(tree);
         } catch (JamelinRuntimeException e) {
-            System.out.printf("[ERROR] 语法错误：%s", e.getMessage());
+            logger.error(String.format("[ERROR] 语法错误：%s", e.getMessage()));
         }
     }
 
@@ -65,7 +61,7 @@ public class Main {
 
         // 如果文件大小大于 16M
         if (file.length() > 16 * 1024 * 1024) {
-            out.println("[ERROR] 文件过大。");
+            logger.error("[ERROR] 文件过大。");
             System.exit(1);
         }
 
@@ -75,35 +71,11 @@ public class Main {
         try {
             content = charSource.read();
         } catch (IOException ioe) {
-            out.println("[ERROR] 读取文件时发生错误。");
+            logger.error("[ERROR] 读取文件时发生错误。");
             System.exit(1);
         }
 
         return content;
-    }
-
-    private void traverseParseTree(int k, ParserRuleContext tree) {
-        StringBuilder spaceBuilder = new StringBuilder();
-        for (int i = 0; i < k; i++) {
-            spaceBuilder.append("    ");
-        }
-        String currLevelSpace = spaceBuilder.toString();
-
-        // tree.children 可能是空
-        if (tree.children == null) {
-            return;
-        }
-
-        int index = 0;
-        for (ParseTree child : tree.children) {
-            index++;
-            out.printf("%s%d. %s\n", currLevelSpace, index, child.getClass().getName());
-
-            if (child instanceof ParserRuleContext) {
-                ParserRuleContext context = (ParserRuleContext) child;
-                traverseParseTree(k + 1, context);
-            }
-        }
     }
 
     private PromelaAntlrParser.SpecContext getParseTree(String content) {
@@ -117,14 +89,14 @@ public class Main {
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
 
-        JamelinErrorListener errorListener = new JamelinErrorListener();
+        ErrorListener errorListener = new ErrorListener();
         lexer.addErrorListener(errorListener);
         parser.addErrorListener(errorListener);
 
         // 生成解析树
         PromelaAntlrParser.SpecContext tree = parser.spec();
         if (errorListener.isErrorHappened()) {
-            out.println("[ERROR] 语法错误。");
+            logger.error("[ERROR] 语法错误。");
             System.exit(1);
         }
 

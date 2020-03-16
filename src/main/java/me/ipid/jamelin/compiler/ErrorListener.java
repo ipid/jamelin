@@ -2,7 +2,7 @@ package me.ipid.jamelin.compiler;
 
 import org.antlr.v4.runtime.*;
 
-public class JamelinErrorListener extends BaseErrorListener {
+public class ErrorListener extends BaseErrorListener {
 
     boolean errorHappened = false;
 

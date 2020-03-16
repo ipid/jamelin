@@ -485,6 +485,10 @@ CHAR_LITERAL
     : '\'' ('\\' . | .) '\''
     ;
 
+PUNC_COMMA: ',';
+PUNC_EQUAL: '=';
+PUNC_COLON: ':';
+
 L_PARENTHESIS
     : '(' { newLeftBracket(0); }
     ;
