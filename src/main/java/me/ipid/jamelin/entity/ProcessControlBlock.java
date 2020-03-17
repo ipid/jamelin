@@ -1,4 +1,4 @@
 package me.ipid.jamelin.entity;
 
-public class Proctype {
+public class ProcessControlBlock {
 }

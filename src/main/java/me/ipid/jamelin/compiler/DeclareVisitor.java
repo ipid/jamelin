@@ -1,8 +1,8 @@
 package me.ipid.jamelin.compiler;
 
 import com.google.common.collect.ImmutableMap;
-import me.ipid.jamelin.entity.PromelaType;
-import me.ipid.jamelin.entity.SimplePromelaType;
+import me.ipid.jamelin.entity.code.PromelaExpr;
+import me.ipid.jamelin.entity.symbol.*;
 import me.ipid.jamelin.exception.NotSupportedException;
 import me.ipid.jamelin.thirdparty.antlr.*;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.*;
@@ -33,7 +33,7 @@ public class DeclareVisitor extends PromelaAntlrBaseVisitor<Object> {
                     .build();
 
     private ScopeManager currScope;
-    private Map<String, PromelaType> userTypes;
+    private Map<String, PromelaNamedItem> entities;
 
     private ConstExprVisitor constExprVisitor = new ConstExprVisitor();
 
@@ -42,9 +42,9 @@ public class DeclareVisitor extends PromelaAntlrBaseVisitor<Object> {
     private PromelaType currUserType = null;
     private String currVarName = null;
 
-    public DeclareVisitor(ScopeManager currScope, Map<String, PromelaType> userTypes) {
+    public DeclareVisitor(ScopeManager currScope, Map<String, PromelaNamedItem> entities) {
         this.currScope = currScope;
-        this.userTypes = userTypes;
+        this.entities = entities;
     }
 
     @Override
@@ -118,10 +118,7 @@ public class DeclareVisitor extends PromelaAntlrBaseVisitor<Object> {
         currBitLen = lengthMap.get(typeNum);
 
         // 获取有无符号
-        isCurrSigned = false;
-        if (typeNum == PromelaAntlrLexer.INT || typeNum == PromelaAntlrLexer.SHORT) {
-            isCurrSigned = true;
-        }
+        isCurrSigned = typeNum == PromelaAntlrLexer.INT || typeNum == PromelaAntlrLexer.SHORT;
 
         return null;
     }
@@ -153,6 +150,10 @@ public class DeclareVisitor extends PromelaAntlrBaseVisitor<Object> {
     @Override
     public Object visitInitVar_AnyExpr(InitVar_AnyExprContext ctx) {
         currArrayLen = -1;
+
+        ExprVisitor visitor = new ExprVisitor(currScope, entities);
+        visitor.visit(ctx.anyExpr());
+
         return null;
     }
 

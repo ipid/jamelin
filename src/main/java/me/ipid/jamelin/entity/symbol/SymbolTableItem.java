@@ -1,6 +1,6 @@
-package me.ipid.jamelin.entity;
+package me.ipid.jamelin.entity.symbol;
 
-public class SymbolTableItem {
+public class SymbolTableItem implements PromelaNamedItem {
 
     private PromelaType type;
     private int startAddr;

@@ -1,4 +1,6 @@
-package me.ipid.jamelin.entity;
+package me.ipid.jamelin.entity.symbol;
+
+import me.ipid.jamelin.entity.MemorySlot;
 
 import java.util.List;
 
@@ -6,13 +8,15 @@ public interface PromelaType {
 
     /**
      * 获取该类型需要占用多少个槽。
+     *
      * @return 槽数
      */
     int getSize();
 
     /**
      * 获取当前类型的内存布局。
+     *
      * @param container 用于填入槽信息的容器
      */
-     void fillMemoryLayout(List<MemorySlot> container);
+    void fillMemoryLayout(List<MemorySlot> container);
 }

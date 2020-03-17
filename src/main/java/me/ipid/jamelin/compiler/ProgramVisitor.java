@@ -1,25 +1,27 @@
 package me.ipid.jamelin.compiler;
 
-import me.ipid.jamelin.entity.PromelaType;
-import me.ipid.jamelin.entity.code.PromelaStateMachine;
+import me.ipid.jamelin.entity.symbol.Proctype;
+import me.ipid.jamelin.entity.symbol.PromelaNamedItem;
 import me.ipid.jamelin.exception.NotSupportedException;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ProgramVisitor extends PromelaAntlrBaseVisitor<Object> {
 
-    private ScopeManager globalScope, currScope;
-    private PromelaStateMachine currProcStateMachine;
-    private Map<String, PromelaType> userTypes;
+    private ScopeManager scope;
+    private Map<String, PromelaNamedItem> entities;
 
     public ProgramVisitor() {
         globalScope = new ScopeManager();
         currScope = globalScope;
 
-        userTypes = new HashMap<>();
+        entities = new HashMap<>();
+
+        Proctype initProc = new Proctype();
+        entities.put("init", initProc);
     }
 
     @Override
@@ -54,7 +56,7 @@ public class ProgramVisitor extends PromelaAntlrBaseVisitor<Object> {
 
     @Override
     public Object visitModule_DeclareList(PromelaAntlrParser.Module_DeclareListContext ctx) {
-        DeclareVisitor visitor = new DeclareVisitor(currScope, userTypes);
+        DeclareVisitor visitor = new DeclareVisitor(scope, entities);
         visitor.visitChildren(ctx);
 
         return null;

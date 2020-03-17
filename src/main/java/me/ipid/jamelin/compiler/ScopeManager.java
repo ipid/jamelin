@@ -1,8 +1,9 @@
 package me.ipid.jamelin.compiler;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.entity.MemorySlot;
+import me.ipid.jamelin.entity.symbol.PromelaType;
+import me.ipid.jamelin.entity.symbol.SymbolTableItem;
 import me.ipid.jamelin.exception.SyntaxException;
 
 import java.util.*;
@@ -16,14 +17,6 @@ public class ScopeManager {
         Map<String, SymbolTableItem> table = new HashMap<>();
         historySymbolTables = Lists.newArrayList(table);
         symbolTables = Lists.newArrayList(table);
-    }
-
-    public List<Map<String, SymbolTableItem>> getHistorySymbolTables() {
-        return historySymbolTables;
-    }
-
-    public List<Map<String, SymbolTableItem>> getSymbolTables() {
-        return symbolTables;
     }
 
     public void enterScope() {
@@ -40,12 +33,13 @@ public class ScopeManager {
         symbolTables.remove(symbolTables.size() - 1);
     }
 
-    public void fillMemoryLayout(List<MemorySlot> container) {
+    public void fillMemoryLayout(List<MemorySlot> container, boolean isGlobal) {
+        // TODO: 加入设置范围的功能
         throw new Error();
     }
 
     public void putVar(String name, PromelaType type) {
-        if(getVar(name).isPresent()) {
+        if (getVar(name).isPresent()) {
             throw new SyntaxException(String.format("变量 %s 已存在，重复定义", name));
         }
 
@@ -67,4 +61,6 @@ public class ScopeManager {
 
         return Optional.empty();
     }
+
+
 }

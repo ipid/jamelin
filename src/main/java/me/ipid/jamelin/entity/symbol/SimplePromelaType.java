@@ -1,8 +1,10 @@
-package me.ipid.jamelin.entity;
+package me.ipid.jamelin.entity.symbol;
+
+import me.ipid.jamelin.entity.MemorySlot;
 
 import java.util.List;
 
-public class SimplePromelaType implements PromelaType {
+public class SimplePromelaType implements PromelaType, PromelaNamedItem {
     // 是否是有符号的
     private boolean signed;
 
@@ -12,10 +14,21 @@ public class SimplePromelaType implements PromelaType {
     // 数组长度，小于 0 表示不是数组
     private int arrayLen;
 
+    // 初始值，供后续重构使用
+    private int initialValue;
+
     public SimplePromelaType(boolean signed, int bitLen, int arrayLen) {
         this.signed = signed;
         this.bitLen = bitLen;
         this.arrayLen = arrayLen;
+        this.initialValue = 0;
+    }
+
+    public SimplePromelaType(boolean signed, int bitLen, int arrayLen, int initialValue) {
+        this.signed = signed;
+        this.bitLen = bitLen;
+        this.arrayLen = arrayLen;
+        this.initialValue = initialValue;
     }
 
     @Override
@@ -29,10 +42,10 @@ public class SimplePromelaType implements PromelaType {
     @Override
     public void fillMemoryLayout(List<MemorySlot> container) {
         if (bitLen < 0) {
-            container.add(new MemorySlot(signed, bitLen));
+            container.add(new MemorySlot(signed, bitLen, initialValue));
         } else {
             for (int i = 0; i < arrayLen; i++) {
-                container.add(new MemorySlot(signed, bitLen));
+                container.add(new MemorySlot(signed, bitLen, initialValue));
             }
         }
     }

@@ -12,7 +12,6 @@ import me.ipid.jamelin.exception.JamelinRuntimeException;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,6 +23,11 @@ import java.io.IOException;
  */
 public class Main {
 
+    // 最大文件大小（字节）
+    private static final long fileSizeLimit = 16 * 1024 * 1024;
+
+    private static final Logger logger = LogManager.getLogger(Main.class);
+
     public static void main(String[] args) {
         if (args.length < 1) {
             logger.error("请输入文件路径");
@@ -32,8 +36,6 @@ public class Main {
 
         new Main().run(args[0]);
     }
-
-    private static final Logger logger = LogManager.getLogger(Main.class);
 
     /**
      * Main 类的主入口。
@@ -52,7 +54,7 @@ public class Main {
         try {
             visitor.visit(tree);
         } catch (JamelinRuntimeException e) {
-            logger.error(String.format("[ERROR] 语法错误：%s", e.getMessage()));
+            logger.error(String.format("语法错误：%s", e.getMessage()));
         }
     }
 
@@ -60,8 +62,8 @@ public class Main {
         File file = new File(filePath);
 
         // 如果文件大小大于 16M
-        if (file.length() > 16 * 1024 * 1024) {
-            logger.error("[ERROR] 文件过大。");
+        if (file.length() > fileSizeLimit) {
+            logger.error("文件过大。");
             System.exit(1);
         }
 
@@ -71,7 +73,7 @@ public class Main {
         try {
             content = charSource.read();
         } catch (IOException ioe) {
-            logger.error("[ERROR] 读取文件时发生错误。");
+            logger.error("读取文件时发生错误。");
             System.exit(1);
         }
 
@@ -80,7 +82,7 @@ public class Main {
 
     private PromelaAntlrParser.SpecContext getParseTree(String content) {
         // 初始化 ANTLR 的一系列类
-        CharStream stream = (CharStream) CharStreams.fromString(content);
+        CharStream stream = CharStreams.fromString(content);
         PromelaAntlrLexer lexer = new PromelaAntlrLexer(stream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         PromelaAntlrParser parser = new PromelaAntlrParser(tokens);
@@ -96,7 +98,7 @@ public class Main {
         // 生成解析树
         PromelaAntlrParser.SpecContext tree = parser.spec();
         if (errorListener.isErrorHappened()) {
-            logger.error("[ERROR] 语法错误。");
+            logger.error("语法错误。");
             System.exit(1);
         }
 

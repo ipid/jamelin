@@ -1,7 +1,5 @@
 package me.ipid.jamelin.entity;
 
-import me.ipid.jamelin.exception.NotSupportedException;
-
 public class MemorySlot {
     private boolean signed;
     private int bitLen;
