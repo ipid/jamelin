@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.symbol;
 
-import me.ipid.jamelin.entity.MemorySlot;
+import me.ipid.jamelin.entity.*;
 
 import java.util.List;
 

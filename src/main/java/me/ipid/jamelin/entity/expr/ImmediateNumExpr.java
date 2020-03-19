@@ -1,7 +1,7 @@
-package me.ipid.jamelin.entity.code;
+package me.ipid.jamelin.entity.expr;
 
-import me.ipid.jamelin.entity.ProcessControlBlock;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.execute.*;
 
 public class ImmediateNumExpr implements PromelaExpr {
 

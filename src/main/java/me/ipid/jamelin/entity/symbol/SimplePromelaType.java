@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.symbol;
 
-import me.ipid.jamelin.entity.MemorySlot;
+import me.ipid.jamelin.entity.*;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class SimplePromelaType implements PromelaType, PromelaNamedItem {
 
     @Override
     public void fillMemoryLayout(List<MemorySlot> container) {
-        if (bitLen < 0) {
+        if (arrayLen < 0) {
             container.add(new MemorySlot(signed, bitLen, initialValue));
         } else {
             for (int i = 0; i < arrayLen; i++) {

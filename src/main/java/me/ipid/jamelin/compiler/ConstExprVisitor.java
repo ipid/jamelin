@@ -1,7 +1,6 @@
 package me.ipid.jamelin.compiler;
 
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
+import me.ipid.jamelin.thirdparty.antlr.*;
 import org.apache.commons.text.StringEscapeUtils;
 
 public class ConstExprVisitor extends PromelaAntlrBaseVisitor<Integer> {

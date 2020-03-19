@@ -6,11 +6,11 @@ package me.ipid.jamelin;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
-import me.ipid.jamelin.compiler.ErrorListener;
-import me.ipid.jamelin.compiler.ProgramVisitor;
-import me.ipid.jamelin.exception.JamelinRuntimeException;
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
+import me.ipid.jamelin.compiler.*;
+import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.exception.*;
+import me.ipid.jamelin.execute.*;
+import me.ipid.jamelin.thirdparty.antlr.*;
 import org.antlr.v4.runtime.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,12 +50,19 @@ public class Main {
         PromelaAntlrParser.SpecContext tree = getParseTree(content);
 
         logger.debug("生成状态图");
-        ProgramVisitor visitor = new ProgramVisitor();
+        CompileTimeInfo info = new CompileTimeInfo();
+        RuntimeInfo runInfo = new RuntimeInfo();
+        ProgramVisitor visitor = new ProgramVisitor(info, runInfo);
         try {
             visitor.visit(tree);
         } catch (JamelinRuntimeException e) {
             logger.error(String.format("语法错误：%s", e.getMessage()));
+            System.exit(1);
         }
+
+        logger.debug("开始运行");
+        JamelinKernel kernel = new JamelinKernel(runInfo);
+        kernel.run();
     }
 
     private String readFile(String filePath) {
@@ -97,8 +104,12 @@ public class Main {
 
         // 生成解析树
         PromelaAntlrParser.SpecContext tree = parser.spec();
+
+        // 将语法错误打印给用户
         if (errorListener.isErrorHappened()) {
-            logger.error("语法错误。");
+            for (String errMsg : errorListener.getErrorList()) {
+                logger.error(errMsg);
+            }
             System.exit(1);
         }
 
