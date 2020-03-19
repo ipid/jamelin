@@ -21,6 +21,7 @@ public class PrintfStatement implements PromelaStatement {
 
         System.out.printf(template, paramExprList
                 .stream()
-                .map(x -> x.execute(kernel, procInfo)).toArray());
+                .map(x -> x.execute(kernel, procInfo))
+                .toArray());
     }
 }
