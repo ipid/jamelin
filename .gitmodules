@@ -1,3 +1,4 @@
 [submodule "ipid-util"]
 	path = ipid-util
 	url = git@github.com:ipid/ipid-util
+	branch = master
