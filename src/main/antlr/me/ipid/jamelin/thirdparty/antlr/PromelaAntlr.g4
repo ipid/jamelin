@@ -74,7 +74,7 @@ utype
     ;
 
 mtype
-    : MTYPE delimeter? (':' delimeter? IDENTIFIER delimeter?)? '='? delimeter? '{' (delimeter | ',' | IDENTIFIER)* '}'
+    : MTYPE delimeter? (':' delimeter? subType=IDENTIFIER delimeter?)? '='? delimeter? '{' (delimeter | ',' | mtypeName+=IDENTIFIER )* '}'
     ;
 
 inline:
@@ -97,9 +97,24 @@ declareList
 
 // 本质：也是一条语句
 oneDeclare
-    : (VISIBLE | LOCAL)? typeName IDENTIFIER initVar? (',' IDENTIFIER initVar?)*  # oneDeclare_Normal
-    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar? (',' IDENTIFIER ':' NUMBER initVar?)*  # oneDeclare_Unsigned
+    : (VISIBLE | LOCAL)? typeName initVar (',' initVar)*  # oneDeclare_Normal
+    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*  # oneDeclare_Unsigned
     ;
+
+initVar returns [String varName]
+    : IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
+    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
+    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
+    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']'  # initVar_Array
+    | IDENTIFIER { $varName = $IDENTIFIER.text } '=' anyExpr  # initVar_AnyExpr
+    | IDENTIFIER { $varName = $IDENTIFIER.text } '=' chanInit  # initVar_ChanInit
+    | IDENTIFIER { $varName = $IDENTIFIER.text }  # initVar_NoInit
+    ;
+
+initializerList
+    : '{' delimeter? anyExpr 
+            (delimeter? ',' delimeter? anyExpr)* delimeter?
+            (',' delimeter?)? '}';
 
 priority
     : PRIORITY delimeter? constExpr
@@ -109,29 +124,14 @@ enabler
     : PROVIDED delimeter? '(' expr ')'
     ;
 
-// 这里把 visible 移到下面去了
-
 sequence
     : delimeter? step (delimeter step)* delimeter?
     ;
 
 step
-    : statement (delimeter? UNLESS delimeter? statement)?
+    : statement delimeter? UNLESS delimeter? statement  # step_UnlessStatement
+    | statement  # step_NormalStatement
     ;
-
-initVar
-    : '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
-    | '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
-    | '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
-    | '[' constExpr ']'  # initVar_Array
-    | '=' anyExpr  # initVar_AnyExpr
-    | '=' chanInit  # initVar_ChanInit
-    ;
-
-initializerList
-    : '{' delimeter? anyExpr 
-            (delimeter? ',' delimeter? anyExpr)* delimeter?
-            (',' delimeter?)? '}';
 
 chanInit
     : '[' constExpr ']' OF '{' (delimeter | ',' | typeName)* '}'
@@ -204,7 +204,7 @@ statement
     | statementBlock  # statement_Compound
 // 这里把 else 放到表达式里了
     | BREAK  # statement_Break
-    | GOTO IDENTIFIER  # statement_Goto
+    | GOTO delimeter? IDENTIFIER  # statement_Goto
     | IDENTIFIER ':' delimeter? statement  # statement_Labeled
     | PRINTF delimeter? '(' STRING (',' argList)? ')'  # statement_Printf
     | PRINTM delimeter? '(' varRef ')'  # statement_Printm
@@ -266,7 +266,7 @@ expr
     | CHAN_POLL '(' varRef ')'  # expr_ChanPoll
     ;
 
-constExpr
+constExpr returns [int v]
     : '(' constExpr ')'  # constExpr_Compound
     | <assoc=right> '-' delimeter? constExpr  # constExpr_Unary
     | constExpr '*' delimeter? constExpr  # constExpr_Binary

@@ -156,6 +156,7 @@ buildNumber.properties
 
 # Ignore generated sources because they can be generated on my own
 /generated-src/
+/run/
 
 # ANTLR Plugin
 **/.antlr/

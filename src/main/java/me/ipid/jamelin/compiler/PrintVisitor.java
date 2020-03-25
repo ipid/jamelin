@@ -20,12 +20,7 @@ public class PrintVisitor extends PromelaAntlrBaseVisitor<List<PromelaStatement>
     }
 
     public List<PromelaStatement> entryPoint(Statement_PrintfContext ctx) {
-        List<PromelaExpr> exprList;
-        if (ctx.argList() == null) {
-            exprList = new ArrayList<>();
-        } else {
-            exprList = new ExprVisitor(info).traverseArgList(ctx.argList());
-        }
+
 
         String printTemplateRaw = ctx.STRING().getText();
         String printTemplate = StringEscapeUtils.unescapeJava(
