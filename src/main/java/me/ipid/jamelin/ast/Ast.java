@@ -23,12 +23,40 @@ public class Ast {
     public interface AstVarRef extends AstNode {
     }
 
-    public static class AstArrayAccess implements AstVarRef {
+    public static class AstAdditionStatement extends AstAssignment {
+        public final int addBy;
 
+        public AstAdditionStatement(AstVarRef target, int addBy) {
+            super(target);
+            this.addBy = addBy;
+        }
     }
 
-    public static class AstAssignStatement implements AstStatement {
+    public static class AstArrayAccess implements AstVarRef {
+        public final AstExpr index;
+        public final AstVarRef target;
 
+        public AstArrayAccess(AstVarRef target, AstExpr index) {
+            this.target = target;
+            this.index = index;
+        }
+    }
+
+    public static class AstSetValueStatement extends AstAssignment {
+        public final AstExpr value;
+
+        public AstSetValueStatement(AstVarRef target, AstExpr value) {
+            super(target);
+            this.value = value;
+        }
+    }
+
+    public static abstract class AstAssignment implements AstStatement {
+        public final AstVarRef target;
+
+        protected AstAssignment(AstVarRef target) {
+            this.target = target;
+        }
     }
 
     public static class AstBlockableStatement implements AstStatement {
@@ -58,17 +86,21 @@ public class Ast {
     }
 
     public static class AstDeclareStatement implements AstStatement {
+        public final List<AstDeclare> declares;
 
-    }
-
-    public static class AstDummy implements AstNode {
-    }
-
-    public static class AstDummyStatement implements AstStatement {
+        public AstDeclareStatement(List<AstDeclare> declares) {
+            this.declares = declares;
+        }
     }
 
     public static class AstMemberAccess implements AstVarRef {
+        public final String member;
+        public final AstVarRef target;
 
+        public AstMemberAccess(AstVarRef target, String member) {
+            this.target = target;
+            this.member = member;
+        }
     }
 
     public static class AstMtype implements AstModule {
@@ -153,6 +185,14 @@ public class Ast {
 
         public AstVarExprInit(AstExpr expr) {
             this.expr = expr;
+        }
+    }
+
+    public static class AstVariableName implements AstVarRef {
+        public final String varName;
+
+        public AstVariableName(String varName) {
+            this.varName = varName;
         }
     }
 

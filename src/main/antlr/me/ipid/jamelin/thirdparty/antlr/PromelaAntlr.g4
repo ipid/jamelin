@@ -266,7 +266,7 @@ expr
     | CHAN_POLL '(' varRef ')'  # expr_ChanPoll
     ;
 
-constExpr returns [int v]
+constExpr
     : '(' constExpr ')'  # constExpr_Compound
     | <assoc=right> '-' delimeter? constExpr  # constExpr_Unary
     | constExpr '*' delimeter? constExpr  # constExpr_Binary

@@ -1,23 +1,18 @@
 package me.ipid.jamelin.ast;
 
 import me.ipid.jamelin.ast.Ast.*;
-import me.ipid.jamelin.exception.NotSupportedException;
-import me.ipid.jamelin.exception.SyntaxException;
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
+import me.ipid.jamelin.exception.*;
+import me.ipid.jamelin.thirdparty.antlr.*;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.*;
-import me.ipid.jamelin.util.PromelaPrintfUtil;
-import me.ipid.util.cell.Cell;
-import me.ipid.util.cell.CellInt;
-import me.ipid.util.cell.Cells;
+import me.ipid.jamelin.util.*;
+import me.ipid.util.cell.*;
 import me.ipid.util.tupling.Tuple3;
 import me.ipid.util.visitor.SubclassVisitor;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
@@ -25,14 +20,22 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
         List<AstDeclare> result = new ArrayList<>();
 
         for (OneDeclareContext oneDeclare : ctx.oneDeclare()) {
-            SubclassVisitor.visit(
-                    oneDeclare
-            ).when(OneDeclare_NormalContext.class, x -> {
-                result.addAll(buildOneDeclareOfNormal(x));
-            }).other(x -> {
-                throw new NotSupportedException("暂不支持 unsigned 变量的定义");
-            });
+            result.addAll(buildOneDeclareAll(oneDeclare));
         }
+
+        return result;
+    }
+
+    private List<AstDeclare> buildOneDeclareAll(OneDeclareContext oneDeclare) {
+        List<AstDeclare> result = new ArrayList<>();
+
+        SubclassVisitor.visit(
+                oneDeclare
+        ).when(OneDeclare_NormalContext.class, x -> {
+            result.addAll(buildOneDeclareOfNormal(x));
+        }).other(x -> {
+            throw new NotSupportedException("暂不支持 unsigned 变量的定义");
+        });
 
         return result;
     }
@@ -114,35 +117,21 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
     }
 
     @Override
-    public AstProctype visitInit(InitContext ctx) {
+    public AstProgram visitSpec(SpecContext ctx) {
+        List<AstModule> modules = new ArrayList<>();
+        Cell<Optional<AstProctype>> init = Cells.of(Optional.empty());
 
-        Optional<Integer> priority = Optional.empty();
-        if (ctx.priority() != null) {
-            priority = Optional.of(ConstExprCalculator.calc(ctx.priority().constExpr()));
+        for (ModuleContext mCtx : ctx.module()) {
+            SubclassVisitor.visit(
+                    mCtx
+            ).when(Module_InitContext.class, x -> {
+                init.v = Optional.of(visitInit(x.init()));
+            }).other(x -> {
+                modules.add((AstModule) visit(x));
+            });
         }
 
-        AstStatementBlock statements = visitStatementBlock(ctx.statementBlock());
-
-        return new AstProctype(true, "init", new ArrayList<>(), priority, Optional.empty(), statements);
-    }
-
-    @Override
-    public AstMtype visitMtype(MtypeContext ctx) {
-        Optional<String> subType = Optional.empty();
-        if (ctx.subType != null) {
-            subType = Optional.of(ctx.subType.getText());
-        }
-
-        List<String> mtypeName;
-        if (ctx.mtypeName != null) {
-            mtypeName = ctx.mtypeName.stream()
-                    .map(Token::getText)
-                    .collect(Collectors.toCollection(ArrayList::new));
-        } else {
-            mtypeName = new ArrayList<>();
-        }
-
-        return new AstMtype(subType, mtypeName);
+        return new AstProgram(modules, init.v);
     }
 
     @Override
@@ -177,31 +166,65 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
     }
 
     @Override
-    public AstProgram visitSpec(SpecContext ctx) {
-        List<AstModule> modules = new ArrayList<>();
-        Cell<Optional<AstProctype>> init = Cells.of(Optional.empty());
+    public AstProctype visitInit(InitContext ctx) {
 
-        for (ModuleContext mCtx : ctx.module()) {
-            SubclassVisitor.visit(
-                    mCtx
-            ).when(Module_InitContext.class, x -> {
-                init.v = Optional.of(visitInit(x.init()));
-            }).other(x -> {
-                modules.add((AstModule) visit(x));
-            });
+        Optional<Integer> priority = Optional.empty();
+        if (ctx.priority() != null) {
+            priority = Optional.of(ConstExprCalculator.calc(ctx.priority().constExpr()));
         }
 
-        return new AstProgram(modules, init.v);
+        AstStatementBlock statements = visitStatementBlock(ctx.statementBlock());
+
+        return new AstProctype(true, "init", new ArrayList<>(), priority, Optional.empty(), statements);
+    }
+
+    @Override
+    public AstUtype visitUtype(UtypeContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        List<AstDeclare> declares = buildDeclareList(ctx.declareList());
+
+        return new AstUtype(name, declares);
+    }
+
+    @Override
+    public AstMtype visitMtype(MtypeContext ctx) {
+        Optional<String> subType = Optional.empty();
+        if (ctx.subType != null) {
+            subType = Optional.of(ctx.subType.getText());
+        }
+
+        List<String> mtypeName;
+        if (ctx.mtypeName != null) {
+            mtypeName = ctx.mtypeName.stream()
+                    .map(Token::getText)
+                    .collect(Collectors.toCollection(ArrayList::new));
+        } else {
+            mtypeName = new ArrayList<>();
+        }
+
+        return new AstMtype(subType, mtypeName);
+    }
+
+    @Override
+    public AstDeclareStatement visitStatement_OneDeclare(Statement_OneDeclareContext ctx) {
+        return new AstDeclareStatement(
+                buildOneDeclareAll(ctx.oneDeclare()));
+    }
+
+    @Override
+    public AstUnlessStatement visitStep_UnlessStatement(Step_UnlessStatementContext ctx) {
+        return new AstUnlessStatement(
+                (AstStatement) visit(ctx.statement(0)), (AstStatement) visit(ctx.statement(1)));
+    }
+
+    @Override
+    public AstStatement visitStep_NormalStatement(Step_NormalStatementContext ctx) {
+        return (AstStatement) visit(ctx.statement());
     }
 
     @Override
     public AstStatementBlock visitStatementBlock(StatementBlockContext ctx) {
         return new AstStatementBlock(buildStatementFromSequence(ctx.sequence()));
-    }
-
-    @Override
-    public AstNode visitStatement_Assign(Statement_AssignContext ctx) {
-        return super.visitStatement_Assign(ctx);
     }
 
     @Override
@@ -232,21 +255,21 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
     }
 
     @Override
-    public AstStatement visitStep_NormalStatement(Step_NormalStatementContext ctx) {
-        return (AstStatement) visit(ctx.statement());
-    }
+    public AstAssignment visitStatement_Assign(Statement_AssignContext ctx) {
+        AssignmentContext assign = ctx.assignment();
+        Cell<AstAssignment> result = Cells.empty();
 
-    @Override
-    public AstUnlessStatement visitStep_UnlessStatement(Step_UnlessStatementContext ctx) {
-        return new AstUnlessStatement(
-                (AstStatement) visit(ctx.statement(0)), (AstStatement) visit(ctx.statement(1)));
-    }
+        SubclassVisitor.visit(
+                assign
+        ).when(Assignment_DummyContext.class, x -> {
+        }).when(Assignment_IncreaseContext.class, x -> {
+            result.v = new AstAdditionStatement((AstVarRef) visit(x.varRef()), 1);
+        }).when(Assignment_DecreaseContext.class, x -> {
+            result.v = new AstAdditionStatement((AstVarRef) visit(x.varRef()), -1);
+        }).when(Assignment_NormalContext.class, x -> {
+            result.v = new AstSetValueStatement((AstVarRef) visit(x.varRef()), (AstExpr) visit(x.anyExpr()));
+        });
 
-    @Override
-    public AstUtype visitUtype(UtypeContext ctx) {
-        String name = ctx.IDENTIFIER().getText();
-        List<AstDeclare> declares = buildDeclareList(ctx.declareList());
-
-        return new AstUtype(name, declares);
+        return result.v;
     }
 }
