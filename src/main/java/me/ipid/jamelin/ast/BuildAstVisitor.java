@@ -1,18 +1,23 @@
 package me.ipid.jamelin.ast;
 
 import me.ipid.jamelin.ast.Ast.*;
-import me.ipid.jamelin.exception.*;
-import me.ipid.jamelin.thirdparty.antlr.*;
+import me.ipid.jamelin.exception.NotSupportedException;
+import me.ipid.jamelin.exception.SyntaxException;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.*;
-import me.ipid.jamelin.util.*;
-import me.ipid.util.cell.*;
+import me.ipid.jamelin.util.PromelaPrintfUtil;
+import me.ipid.util.cell.Cell;
+import me.ipid.util.cell.CellInt;
+import me.ipid.util.cell.Cells;
 import me.ipid.util.tupling.Tuple3;
 import me.ipid.util.visitor.SubclassVisitor;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
@@ -64,7 +69,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
         List<AstDeclare> result = new ArrayList<>();
         for (InitVarContext initVar : ctx.initVar()) {
             var info = extractInfoOfInitVar(initVar);
-            result.add(new AstDeclare(show, hidden, local, typeName, info.b, info.a, info.c));
+            result.add(new AstDeclare(show, hidden, local, typeName, info.a, info.b, info.c));
         }
 
         return result;
@@ -131,7 +136,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
             });
         }
 
-        return new AstProgram(modules, init.v);
+        return new AstProgram(init.v, modules);
     }
 
     @Override
@@ -162,7 +167,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
 
         AstStatementBlock statementBlock = visitStatementBlock(ctx.statementBlock());
 
-        return new AstProctype(active, name, parameters, priority, enabler, statementBlock);
+        return new AstProctype(active, enabler, name, parameters, priority, statementBlock);
     }
 
     @Override
@@ -175,7 +180,8 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
 
         AstStatementBlock statements = visitStatementBlock(ctx.statementBlock());
 
-        return new AstProctype(true, "init", new ArrayList<>(), priority, Optional.empty(), statements);
+        return new AstProctype(true, Optional.empty(), "init", new ArrayList<>(),
+                Optional.empty(), statements);
     }
 
     @Override
@@ -183,7 +189,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
         String name = ctx.IDENTIFIER().getText();
         List<AstDeclare> declares = buildDeclareList(ctx.declareList());
 
-        return new AstUtype(name, declares);
+        return new AstUtype(declares, name);
     }
 
     @Override
@@ -202,7 +208,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
             mtypeName = new ArrayList<>();
         }
 
-        return new AstMtype(subType, mtypeName);
+        return new AstMtype(mtypeName, subType);
     }
 
     @Override

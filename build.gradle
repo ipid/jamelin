@@ -4,6 +4,7 @@ plugins {
 
     id 'antlr'
     id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'io.freefair.lombok' version '4.1.6'
 }
 
 repositories {
@@ -26,12 +27,16 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
 
-    compile project(":ipid-util")
+    implementation project(":ipid-util")
+}
+
+lombok {
+    version = '1.18.+'
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 generateGrammarSource {

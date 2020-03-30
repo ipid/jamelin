@@ -14,8 +14,8 @@ import java.util.List;
 public class ILBuilder {
 
     public static RuntimeInfo buildRuntimeInfo(AstProgram program) {
-        CompileTimeInfo compileInfo = new CompileTimeInfo();
-
+        var compileInfo = new CompileTimeInfo();
+        var runtimeInfo = new RuntimeInfo();
     }
 
     public static Proctype buildProctype(AstProctype astProctype) {

@@ -102,13 +102,13 @@ oneDeclare
     ;
 
 initVar returns [String varName]
-    : IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
-    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
-    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
-    | IDENTIFIER { $varName = $IDENTIFIER.text } '[' constExpr ']'  # initVar_Array
-    | IDENTIFIER { $varName = $IDENTIFIER.text } '=' anyExpr  # initVar_AnyExpr
-    | IDENTIFIER { $varName = $IDENTIFIER.text } '=' chanInit  # initVar_ChanInit
-    | IDENTIFIER { $varName = $IDENTIFIER.text }  # initVar_NoInit
+    : IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
+    | IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
+    | IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
+    | IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']'  # initVar_Array
+    | IDENTIFIER { $varName = $IDENTIFIER.text; } '=' anyExpr  # initVar_AnyExpr
+    | IDENTIFIER { $varName = $IDENTIFIER.text; } '=' chanInit  # initVar_ChanInit
+    | IDENTIFIER { $varName = $IDENTIFIER.text; }  # initVar_NoInit
     ;
 
 initializerList

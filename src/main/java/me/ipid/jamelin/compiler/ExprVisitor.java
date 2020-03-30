@@ -129,7 +129,7 @@ public class ExprVisitor extends PromelaAntlrBaseVisitor<PromelaExpr> {
         String varName = ctx.IDENTIFIER().getText();
         Optional<SymbolTableItem> varItemRaw = info.getTable().getVar(varName);
 
-        if (!varItemRaw.isPresent()) {
+        if (varItemRaw.isEmpty()) {
             throw new SyntaxException(String.format("变量 %s 不存在", varName));
         }
 
