@@ -1,15 +1,15 @@
-package me.ipid.jamelin.entity.statement;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.execute.*;
 
-public class IncDecStatement implements PromelaStatement {
+public class ILIncDec implements ILStatement {
 
     private boolean global;
     private int offset;
     private boolean increment;
 
-    public IncDecStatement(boolean global, int offset, boolean increment) {
+    public ILIncDec(boolean global, int offset, boolean increment) {
         this.global = global;
         this.offset = offset;
         this.increment = increment;

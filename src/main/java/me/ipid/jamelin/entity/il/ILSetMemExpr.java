@@ -1,16 +1,15 @@
-package me.ipid.jamelin.entity.statement;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.entity.expr.*;
 import me.ipid.jamelin.execute.*;
 
-public class SetMemoryStatement implements PromelaStatement {
+public class ILSetMemExpr implements ILStatement {
 
     private boolean global;
     private int offset;
-    private PromelaExpr valueExpr;
+    private ILExpr valueExpr;
 
-    public SetMemoryStatement(boolean global, int offset, PromelaExpr valueExpr) {
+    public ILSetMemExpr(boolean global, int offset, ILExpr valueExpr) {
         this.global = global;
         this.offset = offset;
         this.valueExpr = valueExpr;
@@ -24,7 +23,7 @@ public class SetMemoryStatement implements PromelaStatement {
         return offset;
     }
 
-    public PromelaExpr getValueExpr() {
+    public ILExpr getValueExpr() {
         return valueExpr;
     }
 

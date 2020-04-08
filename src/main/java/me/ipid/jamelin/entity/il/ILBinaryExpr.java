@@ -1,15 +1,16 @@
-package me.ipid.jamelin.entity.expr;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.constant.*;
+import me.ipid.jamelin.constant.PromelaLanguage.BinaryOp;
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.execute.*;
 
-public class BinaryOpExpr implements PromelaExpr {
+public class ILBinaryExpr implements ILExpr {
 
-    private PromelaExpr left, right;
+    private ILExpr left, right;
     private BinaryOp op;
 
-    public BinaryOpExpr(PromelaExpr left, PromelaExpr right, BinaryOp op) {
+    public ILBinaryExpr(ILExpr left, ILExpr right, BinaryOp op) {
         this.left = left;
         this.right = right;
         this.op = op;

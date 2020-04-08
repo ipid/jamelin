@@ -1,13 +1,13 @@
-package me.ipid.jamelin.entity.expr;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.execute.*;
 
-public class GetMemExpr implements PromelaExpr {
+public class ILGetMemExpr implements ILExpr {
     private boolean global;
     private int memOffset;
 
-    public GetMemExpr(boolean global, int memOffset) {
+    public ILGetMemExpr(boolean global, int memOffset) {
         this.global = global;
         this.memOffset = memOffset;
     }

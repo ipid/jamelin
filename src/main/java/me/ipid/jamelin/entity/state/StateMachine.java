@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.state;
 
-import me.ipid.jamelin.entity.statement.*;
+import me.ipid.jamelin.entity.il.ILStatement;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class StateMachine {
         return this;
     }
 
-    public StateMachine link(StateNode oldNode, StateNode newNode, List<PromelaStatement> statements) {
+    public StateMachine link(StateNode oldNode, StateNode newNode, List<ILStatement> statements) {
         TransitionEdge edge = new TransitionEdge(0, newNode);
         edge.getAction().addAll(statements);
 
@@ -42,7 +42,7 @@ public class StateMachine {
         return this;
     }
 
-    public StateMachine linkToNewEnd(List<PromelaStatement> statements) {
+    public StateMachine linkToNewEnd(List<ILStatement> statements) {
         StateNode newNode = new StateNode();
 
         link(end, newNode, statements);

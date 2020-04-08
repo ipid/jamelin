@@ -1,8 +1,10 @@
 package me.ipid.jamelin.execute;
 
+import me.ipid.jamelin.ast.Ast.AstProctype;
 import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.entity.il.ILProctype;
+import me.ipid.jamelin.entity.il.ILStatement;
 import me.ipid.jamelin.entity.state.*;
-import me.ipid.jamelin.entity.statement.*;
 import me.ipid.jamelin.util.*;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -19,12 +21,20 @@ public class JamelinKernel {
         this.info = info;
 
         this.globalMemory = new ArrayList<>();
-        MemoryUtil.copyMemorySlots(info.getGlobalMemoryLayout(), this.globalMemory);
+        MemoryUtil.copyMemorySlots(info.globalMemoryLayout, this.globalMemory);
 
         this.pcbList = new ArrayList<>();
-        ProcessControlBlock initPcb = new ProcessControlBlock(
-                0, info.getInitProc().getMemoryLayout(), info.getInitProc().getStateMachine().getStart());
-        this.pcbList.add(initPcb);
+        fillPcbList(info.activeProcs, this.pcbList);
+    }
+
+    private static void fillPcbList(
+            List<ILProctype> procs, List<ProcessControlBlock> pcbList) {
+        int pid = 0;
+
+        for (var proc : procs) {
+            pcbList.add(new ProcessControlBlock(pid, proc.memoryLayout, proc.stateMachine.getStart()));
+            pid++;
+        }
     }
 
     public MemorySlot getGlobalSlot(int i) {
@@ -56,7 +66,7 @@ public class JamelinKernel {
         }
         Pair<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
 
-        for (PromelaStatement statement : next.getRight().getAction()) {
+        for (ILStatement statement : next.getRight().getAction()) {
             statement.execute(this, next.getLeft());
         }
         next.getLeft().setCurrState(next.getRight().getTo());

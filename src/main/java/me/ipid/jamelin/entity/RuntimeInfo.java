@@ -1,34 +1,17 @@
 package me.ipid.jamelin.entity;
 
-import me.ipid.jamelin.entity.symbol.*;
+import me.ipid.jamelin.entity.il.ILProctype;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RuntimeInfo {
-    private Proctype initProc;
-    private List<MemorySlot> globalMemoryLayout;
+    public final List<ILProctype> procs, activeProcs;
+    public final List<MemorySlot> globalMemoryLayout;
 
     public RuntimeInfo() {
-        this.initProc = new Proctype(-1);
+        this.procs = new ArrayList<>();
+        this.activeProcs = new ArrayList<>();
         this.globalMemoryLayout = new ArrayList<>();
-    }
-
-    public Proctype getInitProc() {
-        return initProc;
-    }
-
-    public RuntimeInfo setInitProc(Proctype initProc) {
-        this.initProc = initProc;
-        return this;
-    }
-
-    public List<MemorySlot> getGlobalMemoryLayout() {
-        return globalMemoryLayout;
-    }
-
-    public RuntimeInfo setGlobalMemoryLayout(List<MemorySlot> globalMemoryLayout) {
-        this.globalMemoryLayout = globalMemoryLayout;
-        return this;
     }
 }

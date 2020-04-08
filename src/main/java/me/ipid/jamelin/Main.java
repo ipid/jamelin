@@ -6,12 +6,20 @@ package me.ipid.jamelin;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
-import me.ipid.jamelin.compiler.*;
-import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.exception.*;
-import me.ipid.jamelin.execute.*;
-import me.ipid.jamelin.thirdparty.antlr.*;
-import org.antlr.v4.runtime.*;
+import me.ipid.jamelin.ast.Ast.AstProgram;
+import me.ipid.jamelin.ast.BuildAstVisitor;
+import me.ipid.jamelin.compiler.ModuleConverter;
+import me.ipid.jamelin.entity.RuntimeInfo;
+import me.ipid.jamelin.exception.CompileExceptions;
+import me.ipid.jamelin.exception.CompileExceptions.CompileException;
+import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
+import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.SpecContext;
+import me.ipid.jamelin.util.AntlrErrorListener;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,22 +54,33 @@ public class Main {
         logger.debug("读入文件内容");
         String content = readFile(filePath);
 
-        logger.debug("生成解析树");
-        PromelaAntlrParser.SpecContext tree = getParseTree(content);
-
-        logger.debug("生成状态图");
-        CompileTimeInfo info = new CompileTimeInfo();
-        RuntimeInfo runInfo = new RuntimeInfo();
-        ProgramVisitor visitor = new ProgramVisitor(info, runInfo);
+        RuntimeInfo rInfo;
         try {
-            visitor.visit(tree);
-        } catch (JamelinRuntimeException e) {
-            logger.error(String.format("语法错误：%s", e.getMessage()));
+            logger.debug("生成解析树");
+            SpecContext tree = getParseTree(content);
+            content = null;
+
+            logger.debug("生成 AST");
+            AstProgram ast;
+            {
+                var visitor = new BuildAstVisitor();
+                ast = visitor.buildProgram(tree);
+            }
+            tree = null;
+
+            logger.debug("生成状态图");
+            rInfo = ModuleConverter.buildRuntimeInfo(ast);
+
+        } catch (CompileException e) {
+            logger.error(String.format("解析错误：%s", e.getMessage()));
             System.exit(1);
+
+            // Unreachable
+            return;
         }
 
         logger.debug("开始运行");
-        JamelinKernel kernel = new JamelinKernel(runInfo);
+        JamelinKernel kernel = new JamelinKernel(rInfo);
         kernel.run();
     }
 
@@ -98,7 +117,7 @@ public class Main {
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
 
-        ErrorListener errorListener = new ErrorListener();
+        AntlrErrorListener errorListener = new AntlrErrorListener();
         lexer.addErrorListener(errorListener);
         parser.addErrorListener(errorListener);
 

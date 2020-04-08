@@ -1,13 +1,13 @@
-package me.ipid.jamelin.entity.expr;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.execute.*;
 
-public class ImmediateNumExpr implements PromelaExpr {
+public class ILConstExpr implements ILExpr {
 
     private int num;
 
-    public ImmediateNumExpr(int num) {
+    public ILConstExpr(int num) {
         this.num = num;
     }
 

@@ -79,8 +79,8 @@ mtype
 
 inline:
     INLINE delimeter?
-    IDENTIFIER delimeter?
-    '(' (IDENTIFIER | ',')* ')' delimeter?
+    name=IDENTIFIER delimeter?
+    '(' (args+=IDENTIFIER | ',')* ')' delimeter?
     statementBlock;
 
 ltl:
@@ -88,20 +88,19 @@ ltl:
     (IDENTIFIER delimeter?)?
     '{' .*? '}';
 
-// declareList 与 sequence 最好采用同样的逻辑，把 declareList 搞清就能搞清 sequence
-// 使用尾后逗号（尾后逗号法）：尾后逗号指 trailing comma
-// diff：加入了尾后 delimeter
 declareList
     : delimeter? oneDeclare (delimeter oneDeclare)* delimeter?
     ;
 
-// 本质：也是一条语句
 oneDeclare
     : (VISIBLE | LOCAL)? typeName initVar (',' initVar)*  # oneDeclare_Normal
-    | VISIBLE? UNSIGNED IDENTIFIER ':' NUMBER initVar (',' IDENTIFIER ':' NUMBER initVar)*  # oneDeclare_Unsigned
+    | VISIBLE? UNSIGNED unsignedItem (',' unsignedItem)*  # oneDeclare_Unsigned
     ;
 
-initVar returns [String varName]
+unsignedItem
+    : IDENTIFIER ':' NUMBER ('=' anyExpr)?;
+
+initVar returns [String varName, int arrLen]
     : IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' initializerList  # initVar_ArrayInitializerList
     | IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' chanInit  # initVar_ArrayChanInit
     | IDENTIFIER { $varName = $IDENTIFIER.text; } '[' constExpr ']' '=' anyExpr  # initVar_ArrayAnyExpr
@@ -129,12 +128,12 @@ sequence
     ;
 
 step
-    : statement delimeter? UNLESS delimeter? statement  # step_UnlessStatement
+    : doThis=statement delimeter? UNLESS delimeter? ifThisBlocking=statement  # step_UnlessStatement
     | statement  # step_NormalStatement
     ;
 
 chanInit
-    : '[' constExpr ']' OF '{' (delimeter | ',' | typeName)* '}'
+    : '[' constExpr ']' OF '{' typeName (delimeter | ',' | typeName)* '}'
     ;
 
 varRef
@@ -200,7 +199,7 @@ statement
     | FOR delimeter? '(' range ')' delimeter? statementBlock  # statement_For
     | ATOMIC delimeter? statementBlock  # statement_Atomic
     | D_STEP delimeter? statementBlock  # statement_Dstep
-    | SELECT delimeter? '(' varRef ':' expr '..' expr ')'  # statement_Select
+    | SELECT delimeter? '(' varRef ':' lower=expr '..' upper=expr ')'  # statement_Select
     | statementBlock  # statement_Compound
 // 这里把 else 放到表达式里了
     | BREAK  # statement_Break
@@ -217,8 +216,8 @@ statement
     ;
 
 range
-    : varRef ':' expr '..' expr  # range_Numeric
-    | varRef IN varRef  # range_Iterate
+    : varRef ':' lower=expr '..' upper=expr  # range_Numeric
+    | storeTo=varRef IN iterateFrom=varRef  # range_Iterate
     ;
 
 choices
@@ -239,7 +238,7 @@ anyExpr
     | anyExpr '|' delimeter? anyExpr  # anyExpr_Binary
     | anyExpr '&&' delimeter? anyExpr  # anyExpr_Binary
     | anyExpr '||' delimeter? anyExpr  # anyExpr_Binary
-    | <assoc=right> '(' anyExpr '->' anyExpr ':' anyExpr ')'  # anyExpr_Ternary
+    | <assoc=right> '(' cond=anyExpr '->' ifTrue=anyExpr ':' ifFalse=anyExpr ')'  # anyExpr_Ternary
     | LEN '(' varRef ')'  # anyExpr_Len
     | poll  # anyExpr_Poll
     | varRef  # anyExpr_VarRef

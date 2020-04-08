@@ -1,15 +1,15 @@
-package me.ipid.jamelin.compiler;
+package me.ipid.jamelin.util;
 
 import org.antlr.v4.runtime.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ErrorListener extends BaseErrorListener {
+public class AntlrErrorListener extends BaseErrorListener {
 
     List<String> errorList;
 
-    public ErrorListener() {
+    public AntlrErrorListener() {
         this.errorList = new ArrayList<>();
     }
 

@@ -1,24 +1,22 @@
-package me.ipid.jamelin.entity.statement;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.entity.expr.*;
 import me.ipid.jamelin.execute.*;
 
 import java.util.List;
 
-public class PrintfStatement implements PromelaStatement {
+public class ILPrintf implements ILStatement {
 
     private String template;
-    private List<PromelaExpr> paramExprList;
+    private List<ILExpr> paramExprList;
 
-    public PrintfStatement(String template, List<PromelaExpr> paramExprList) {
+    public ILPrintf(String template, List<ILExpr> paramExprList) {
         this.template = template;
         this.paramExprList = paramExprList;
     }
 
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-
         System.out.printf(template, paramExprList
                 .stream()
                 .map(x -> x.execute(kernel, procInfo))

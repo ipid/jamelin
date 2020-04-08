@@ -1,27 +1,11 @@
 package me.ipid.jamelin.entity.symbol;
 
-public class SymbolTableItem implements PromelaNamedItem {
+import lombok.Data;
+import me.ipid.jamelin.entity.il.ILType;
 
-    private PromelaType type;
-    private int startAddr;
-    private boolean isGlobal;
-
-    public SymbolTableItem(PromelaType type, int startAddr, boolean isGlobal) {
-        this.type = type;
-        this.startAddr = startAddr;
-        this.isGlobal = isGlobal;
-    }
-
-    public PromelaType getType() {
-        return type;
-    }
-
-    public int getStartAddr() {
-        return startAddr;
-    }
-
-    public boolean isGlobal() {
-        return isGlobal;
-    }
+public @Data
+class SymbolTableItem {
+    public final ILType type;
+    public final int startAddr;
+    public final boolean isGlobal;
 }
-

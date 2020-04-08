@@ -2,7 +2,9 @@ package me.ipid.jamelin.entity.symbol;
 
 import com.google.common.collect.Lists;
 import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.entity.il.ILType;
 import me.ipid.jamelin.exception.*;
+import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 
 import java.util.*;
 
@@ -59,7 +61,7 @@ public class SymbolTable {
         }
     }
 
-    public void putVar(String name, PromelaType type) {
+    public void putVar(String name, ILType type) {
         if (getVar(name).isPresent()) {
             throw new SyntaxException(String.format("变量 %s 已存在，重复定义", name));
         }

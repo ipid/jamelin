@@ -1,10 +1,10 @@
-package me.ipid.jamelin.entity.symbol;
+package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.entity.*;
 
 import java.util.List;
 
-public interface PromelaType {
+public interface ILType {
 
     /**
      * 获取该类型需要占用多少个槽。

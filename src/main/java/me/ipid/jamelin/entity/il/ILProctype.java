@@ -1,19 +1,22 @@
-package me.ipid.jamelin.entity.symbol;
+package me.ipid.jamelin.entity.il;
 
+import lombok.Getter;
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.entity.state.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Proctype implements PromelaNamedItem {
+public class ILProctype implements ILNamedItem {
+    @Getter
+    public final String name;
+
     public final StateMachine stateMachine;
-    public final int id;
     public final List<MemorySlot> memoryLayout;
 
-    public Proctype(int id) {
+    public ILProctype(String name) {
+        this.name = name;
         this.stateMachine = new StateMachine();
-        this.id = id;
         this.memoryLayout = new ArrayList<>();
     }
 }
