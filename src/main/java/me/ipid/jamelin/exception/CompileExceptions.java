@@ -20,4 +20,10 @@ public class CompileExceptions {
         }
     }
 
+    public static class OutOfLimitException extends CompileException {
+        public OutOfLimitException(String message) {
+            super(message);
+        }
+    }
+
 }

@@ -1,22 +1,18 @@
 package me.ipid.jamelin.entity;
 
-import me.ipid.jamelin.entity.il.ILNamedItem;
-import me.ipid.jamelin.entity.il.ILProctype;
-import me.ipid.jamelin.entity.symbol.*;
-import org.apache.commons.collections4.map.ListOrderedMap;
+import lombok.NonNull;
+import me.ipid.jamelin.entity.sa.SASymbolTable;
+import me.ipid.jamelin.entity.sa.SAPromelaType;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class CompileTimeInfo {
-    public final SymbolTable table;
-    public final Map<String, ILNamedItem> namedItems;
-    public final ListOrderedMap<String, ILProctype> proctypes;
+    public final SASymbolTable table;
+    public final NamedItemContainer nItems;
 
-    public CompileTimeInfo() {
-        table = new SymbolTable();
-        namedItems = new HashMap<>();
-        proctypes = new ListOrderedMap<>();
+    public CompileTimeInfo(@NonNull Map<String, SAPromelaType> initialTypes) {
+        table = new SASymbolTable();
+        nItems = new NamedItemContainer(initialTypes);
     }
 }
 

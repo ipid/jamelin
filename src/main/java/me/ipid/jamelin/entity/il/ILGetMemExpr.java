@@ -23,9 +23,9 @@ public class ILGetMemExpr implements ILExpr {
     @Override
     public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
         if (global) {
-            return kernel.getGlobalSlot(memOffset).getValue();
+            return kernel.getGlobalMemory(memOffset);
         }
 
-        return procInfo.getProceesSlot(memOffset).getValue();
+        return procInfo.getProcessMemory(memOffset);
     }
 }

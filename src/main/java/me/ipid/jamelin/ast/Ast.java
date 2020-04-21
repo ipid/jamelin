@@ -146,11 +146,6 @@ public class Ast {
     }
 
     public static final @Data
-    class AstGetPid implements AstExpr {
-        public final @NonNull AstExpr pid;
-    }
-
-    public static final @Data
     class AstGotoStatement implements AstStatement {
         public final @NonNull String toLabel;
     }
@@ -283,7 +278,7 @@ public class Ast {
     }
 
     public static final @Data
-    class AstTernaryIfExpr implements AstExpr {
+    class AstTernaryExpr implements AstExpr {
         public final @NonNull AstExpr cond, ifTrue, ifFalse;
     }
 

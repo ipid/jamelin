@@ -3,16 +3,16 @@ package me.ipid.jamelin.entity.il;
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.execute.*;
 
-public class ILIncDec implements ILStatement {
+public class ILSetMemStatement implements ILStatement {
 
     private boolean global;
     private int offset;
-    private boolean increment;
+    private ILExpr valueExpr;
 
-    public ILIncDec(boolean global, int offset, boolean increment) {
+    public ILSetMemStatement(boolean global, int offset, ILExpr valueExpr) {
         this.global = global;
         this.offset = offset;
-        this.increment = increment;
+        this.valueExpr = valueExpr;
     }
 
     public boolean isGlobal() {
@@ -23,20 +23,18 @@ public class ILIncDec implements ILStatement {
         return offset;
     }
 
-    public boolean isIncrement() {
-        return increment;
+    public ILExpr getValueExpr() {
+        return valueExpr;
     }
 
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        MemorySlot slot;
-        if (global) {
-            slot = kernel.getGlobalSlot(offset);
-        } else {
-            slot = procInfo.getProceesSlot(offset);
-        }
+        int value = valueExpr.execute(kernel, procInfo);
 
-        int newValue = slot.getValue() + (increment ? 1 : -1);
-        slot.setValue(newValue);
+        if (global) {
+            kernel.setGlobalMemory(offset, value);
+        } else {
+            procInfo.setProcessMemory(offset, value);
+        }
     }
 }

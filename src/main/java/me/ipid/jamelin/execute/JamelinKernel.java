@@ -6,25 +6,33 @@ import me.ipid.jamelin.entity.il.ILProctype;
 import me.ipid.jamelin.entity.il.ILStatement;
 import me.ipid.jamelin.entity.state.*;
 import me.ipid.jamelin.util.*;
+import me.ipid.util.tupling.Tuple2;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Tuple2;
 
 import java.util.*;
 
 public class JamelinKernel {
-    private RuntimeInfo info;
-    private List<MemorySlot> globalMemory;
 
-    private List<ProcessControlBlock> pcbList;
+    // 保留 RuntimeInfo，用于支持 run 等表达式
+    private final RuntimeInfo info;
+    private final ArrayList<Integer> globalMemory;
+    private final List<ProcessControlBlock> pcbList;
 
     public JamelinKernel(RuntimeInfo info) {
         this.info = info;
-
-        this.globalMemory = new ArrayList<>();
-        MemoryUtil.copyMemorySlots(info.globalMemoryLayout, this.globalMemory);
+        this.globalMemory = new ArrayList<Integer>(info.globalMemory);
 
         this.pcbList = new ArrayList<>();
         fillPcbList(info.activeProcs, this.pcbList);
+    }
+
+    public int getGlobalMemory(int offset) {
+        return globalMemory.get(offset);
+    }
+
+    public void setGlobalMemory(int offset, int newValue) {
+        globalMemory.set(offset, newValue);
     }
 
     private static void fillPcbList(
@@ -32,13 +40,9 @@ public class JamelinKernel {
         int pid = 0;
 
         for (var proc : procs) {
-            pcbList.add(new ProcessControlBlock(pid, proc.memoryLayout, proc.stateMachine.getStart()));
+            pcbList.add(new ProcessControlBlock(pid, new ArrayList<>(), proc.stateMachine.getStart()));
             pid++;
         }
-    }
-
-    public MemorySlot getGlobalSlot(int i) {
-        return globalMemory.get(i);
     }
 
     public ProcessControlBlock getPcb(int i) {
@@ -60,24 +64,24 @@ public class JamelinKernel {
      * @return 布尔值，True 表示本次执行了一次转移，False 表示本次找不到可执行的转移边
      */
     public boolean runOnce() {
-        Optional<Pair<ProcessControlBlock, TransitionEdge>> maybeNext = findExecutable();
-        if (!maybeNext.isPresent()) {
+        Optional<Tuple2<ProcessControlBlock, TransitionEdge>> maybeNext = findExecutable();
+        if (maybeNext.isEmpty()) {
             return false;
         }
-        Pair<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
+        Tuple2<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
 
-        for (ILStatement statement : next.getRight().getAction()) {
-            statement.execute(this, next.getLeft());
+        for (ILStatement statement : next.b.getAction()) {
+            statement.execute(this, next.a);
         }
-        next.getLeft().setCurrState(next.getRight().getTo());
+        next.a.setCurrState(next.b.getTo());
 
         return true;
     }
 
-    private Optional<Pair<ProcessControlBlock, TransitionEdge>> findExecutable() {
+    private Optional<Tuple2<ProcessControlBlock, TransitionEdge>> findExecutable() {
 
         int count = 0;
-        Optional<Pair<ProcessControlBlock, TransitionEdge>> result = Optional.empty();
+        Optional<Tuple2<ProcessControlBlock, TransitionEdge>> result = Optional.empty();
 
         for (ProcessControlBlock pcb : pcbList) {
             for (TransitionEdge edge : pcb.getCurrState().getOutEdge()) {
@@ -91,7 +95,7 @@ public class JamelinKernel {
                 // 使用 Reservoir sampling 算法节省内存
                 int randNum = RandomUtils.nextInt(0, count);
                 if (randNum == 0) {
-                    result = Optional.of(Pair.of(pcb, edge));
+                    result = Optional.of(Tuple2.of(pcb, edge));
                 }
             }
         }

@@ -7,6 +7,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class PromelaLanguage {
+
+    public static final int ARR_INIT_VAL = 0;
+
+    public static final ImmutableSet<String> primitiveTypes = ImmutableSet.<String>builder()
+            .add("bit", "bool", "byte", "chan", "short", "int", "mtype", "pid")
+            .build();
+
     public enum BinaryOp {
         ADD, SUB, MUL, DIV, MOD, LEFT_SHIFT, RIGHT_SHIFT,
         LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
@@ -35,13 +42,14 @@ public class PromelaLanguage {
                 .build();
     }
 
-    public enum UnaryOp {
-        BIT_NOT, OPPOSITE_NUM, LOGIC_NOT;
+    public enum ChanStatusOp {
+        FULL, EMPTY, NFULL, NEMPTY;
 
-        public static final ImmutableMap<String, UnaryOp> fromText = ImmutableMap.<String, UnaryOp>builder()
-                .put("~", BIT_NOT)
-                .put("-", OPPOSITE_NUM)
-                .put("!", LOGIC_NOT)
+        public static final Map<String, ChanStatusOp> from = ImmutableMap.<String, ChanStatusOp>builder()
+                .put("full", FULL)
+                .put("empty", EMPTY)
+                .put("nfull", NFULL)
+                .put("nempty", NEMPTY)
                 .build();
     }
 
@@ -59,14 +67,13 @@ public class PromelaLanguage {
                 .add("np_", "_last").build();
     }
 
-    public enum ChanStatusOp {
-        FULL, EMPTY, NFULL, NEMPTY;
+    public enum UnaryOp {
+        BIT_NOT, OPPOSITE_NUM, LOGIC_NOT;
 
-        public static final Map<String, ChanStatusOp> from = ImmutableMap.<String, ChanStatusOp>builder()
-                .put("full", FULL)
-                .put("empty", EMPTY)
-                .put("nfull", NFULL)
-                .put("nempty", NEMPTY)
+        public static final ImmutableMap<String, UnaryOp> fromText = ImmutableMap.<String, UnaryOp>builder()
+                .put("~", BIT_NOT)
+                .put("-", OPPOSITE_NUM)
+                .put("!", LOGIC_NOT)
                 .build();
     }
 }

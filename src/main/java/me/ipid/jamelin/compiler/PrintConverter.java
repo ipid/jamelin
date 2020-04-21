@@ -4,9 +4,8 @@ import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.entity.*;
 import me.ipid.jamelin.entity.il.ILExpr;
 import me.ipid.jamelin.entity.il.ILPrintf;
-import me.ipid.jamelin.util.NonNullArrayList;
+import me.ipid.util.nonnulls.NonNullArrayList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PrintConverter {
@@ -16,7 +15,7 @@ public class PrintConverter {
     ) {
         List<ILExpr> args = new NonNullArrayList<>();
         for (var astArg: printf.args) {
-            args.add(ExprConverter.buildExpr(cInfo, astArg));
+            args.add(ExprConverter.buildExpr(cInfo, astArg).requirePrimitive());
         }
 
         return new ILPrintf(printf.template, args);

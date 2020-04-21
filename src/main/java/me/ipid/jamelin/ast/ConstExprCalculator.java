@@ -39,7 +39,7 @@ public class ConstExprCalculator {
         String unesc = StringEscapeUtils.unescapeJava(charContent);
         assert unesc.length() != 3;
 
-        return (int) unesc.charAt(1);
+        return unesc.charAt(1);
     }
 
     private static int calcUnary(ConstExpr_UnaryContext ctx) {

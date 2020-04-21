@@ -8,16 +8,13 @@ import java.util.List;
 
 public class ProcessControlBlock {
 
+    public final ArrayList<Integer> memorySlots;
     private int pid;
-    private List<MemorySlot> memorySlots;
-
     private StateNode currState;
 
-    public ProcessControlBlock(int pid, List<MemorySlot> slotsTemplate, StateNode initialState) {
+    public ProcessControlBlock(int pid, List<Integer> memoryTemplate, StateNode initialState) {
         this.pid = pid;
-
-        this.memorySlots = new ArrayList<>();
-        MemoryUtil.copyMemorySlots(slotsTemplate, this.memorySlots);
+        this.memorySlots = new ArrayList<>(memoryTemplate);
 
         this.currState = initialState;
     }
@@ -31,15 +28,6 @@ public class ProcessControlBlock {
         return this;
     }
 
-    public List<MemorySlot> getMemorySlots() {
-        return memorySlots;
-    }
-
-    public ProcessControlBlock setMemorySlots(List<MemorySlot> memorySlots) {
-        this.memorySlots = memorySlots;
-        return this;
-    }
-
     public StateNode getCurrState() {
         return currState;
     }
@@ -49,8 +37,11 @@ public class ProcessControlBlock {
         return this;
     }
 
-    public MemorySlot getProceesSlot(int i) {
-        return memorySlots.get(i);
+    public int getProcessMemory(int offset) {
+        return memorySlots.get(offset);
     }
 
+    public void setProcessMemory(int offset, int value) {
+        memorySlots.set(offset, value);
+    }
 }

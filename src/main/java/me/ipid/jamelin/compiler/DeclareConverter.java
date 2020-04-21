@@ -1,46 +1,60 @@
 package me.ipid.jamelin.compiler;
 
-import com.google.common.collect.ImmutableMap;
-import me.ipid.jamelin.ast.Ast.AstDeclare;
-import me.ipid.jamelin.ast.Ast.AstExprAsInit;
-import me.ipid.jamelin.ast.Ast.AstNormalDeclare;
-import me.ipid.jamelin.ast.Ast.AstUnsignedDeclare;
+import lombok.NonNull;
+import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.entity.CompileTimeInfo;
 import me.ipid.jamelin.entity.il.*;
+import me.ipid.jamelin.entity.sa.*;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
-import me.ipid.jamelin.exception.Unreachable;
-import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
+import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 import me.ipid.util.cell.Cell;
 import me.ipid.util.cell.Cells;
+import me.ipid.util.errors.Unreachable;
 import me.ipid.util.visitor.SubclassVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * 职责：
  * - 处理变量声明、变量赋值的 AST
  * - 生成代码，并尽可能通过返回值的方式返回信息
  */
-public class DeclareConverter
-        extends PromelaAntlrBaseVisitor<List<ILStatement>> {
+@SuppressWarnings("OptionalGetWithoutIsPresent")
+public final class DeclareConverter {
 
-    private static final Map<String, ILSimpleType> simpleTypeMap =
-            new ImmutableMap.Builder<String, ILSimpleType>()
-                    .put("bit", new ILSimpleType(false, 1, 0, "bit"))
-                    .put("bool", new ILSimpleType(false, 1, 0, "bool"))
-                    .put("byte", new ILSimpleType(false, 8, 0, "byte"))
-                    .put("chan", new ILSimpleType(false, 8, 0, "chan"))
-                    .put("short", new ILSimpleType(true, 16, 0, "short"))
-                    .put("int", new ILSimpleType(true, 32, 0, "int"))
-                    .put("mtype", new ILSimpleType(false, 8, 0, "mtype"))
-                    .put("pid", new ILSimpleType(false, 8, 0, "pid"))
-                    .build();
+    public static void addUtype(CompileTimeInfo cInfo, AstUtype astUtype) {
+        // 检查名字是否冲突
+        if (cInfo.nItems.getItem(astUtype.newTypeName).isPresent()) {
+            throw new SyntaxException("定义新类型错误：名称 " + astUtype.newTypeName + " 冲突");
+        }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
+        SAUtype saUtype = new SAUtype(SATypeFactory.allocTypeId());
+
+        // 逐条处理 AST 中的声明
+        for (AstDeclare astDeclare : astUtype.members) {
+            // 检查字段名是否重复
+            if (saUtype.fields.getVar(astDeclare.getVarName()).isPresent()) {
+                throw new SyntaxException(
+                        "自定义类型 " + astUtype.newTypeName + " 错误：字段 " + astDeclare.getVarName() + " 已经存在");
+            }
+
+            // 提取类型、初值
+            SAPromelaType fieldType = extractType(cInfo, astDeclare);
+            var astInit = astDeclare.getVarInit();
+            var saInit = GlbInitValConverter.buildInitValInUtype(fieldType, astInit);
+
+            // 放入当前 utype 的符号表中
+            saUtype.fields.putVar(astDeclare.getVarName(), fieldType, saInit);
+        }
+
+        // 放入全局符号表中
+        cInfo.nItems.putType(astUtype.newTypeName, saUtype);
+    }
+
     public static List<ILStatement> buildFromDeclare(
-            CompileTimeInfo cInfo, AstDeclare declare
+            @NonNull CompileTimeInfo cInfo, @NonNull AstDeclare declare
     ) {
         Cell<List<ILStatement>> result = Cells.empty();
 
@@ -58,7 +72,26 @@ public class DeclareConverter
     }
 
     private static List<ILStatement> buildFromUnsignedDeclare(CompileTimeInfo cInfo, AstUnsignedDeclare dec) {
-        throw new NotSupportedException("暂不支持 unsigned 变量");
+        // 放入符号表
+        var type = extractUnsigned(dec);
+        cInfo.table.putVar(dec.varName, type, SANoInit.instance());
+        var item = cInfo.table.getVar(dec.varName).get();
+
+        // 生成赋值语句
+        if (dec.varInit.isEmpty()) {
+            return new ArrayList<>();
+        }
+        var initVal = dec.varInit.get();
+        if (initVal instanceof AstExprAsInit) {
+            // 生成一条简单的赋值语句
+            var exprInitVal = (AstExprAsInit) initVal;
+            ILExpr ilValue = ExprConverter.buildExpr(cInfo, exprInitVal.expr).expr;
+
+            return assignExprOnOffset(
+                    item.a, item.b, ilValue);
+        }
+
+        throw new SyntaxException("unsigned 变量不能用 " + initVal.getClass().getSimpleName() + " 初始化");
     }
 
     private static List<ILStatement> buildFromNormalDeclare(
@@ -68,28 +101,118 @@ public class DeclareConverter
             throw new NotSupportedException("这编译器菜得很，不支持 show、local、hidden 这些高端特性");
         }
 
-        ILType ilType = simpleTypeMap.get(declare.typeName);
-        // 如果类型不是简单类型
-        if (ilType == null) {
-            throw new NotSupportedException("别折腾了，这编译器不支持高端自定义类型");
-        }
-        // 如果是数组，就上一层 wrapper
-        if (declare.arrayLen > 0) {
-            ilType = new ILArrayType(declare.arrayLen, ilType);
-        }
-        cInfo.table.putVar(declare.varName, ilType);
+        // 提取类型，插入符号表
+        SAPromelaType saType = extractType(cInfo, declare);
 
-        List<ILStatement> result = new ArrayList<>();
-        var tableItem = cInfo.table.getVar(declare.varName).get();
+        // 没有初始值
+        if (declare.varInit.isEmpty()) {
+            cInfo.table.putVar(declare.varName, saType, SANoInit.instance());
+            return new ArrayList<>();
+        }
+        var astInit = declare.varInit.get();
 
-        declare.varInit.ifPresent(astVarInit -> SubclassVisitor.visit(
-                astVarInit
-        ).when(AstExprAsInit.class, x -> {
-            ILExpr initValue = ExprConverter.buildExpr(cInfo, x.expr);
-            result.add(new ILSetMemExpr(tableItem.isGlobal, tableItem.startAddr, initValue));
+        // Primitive Array - Init List
+        if (astInit instanceof AstInitializerList && saType.isPrimitiveArray()) {
+            SAInitVal initVal = GlbInitValConverter.initListOnArray(
+                    (SAArrayType) saType, (AstInitializerList) astInit
+            );
+            cInfo.table.putVar(declare.varName, saType, initVal);
+            return new ArrayList<>();
+        }
+
+        // Primitive Type - Expr Init
+        if (astInit instanceof AstExprAsInit) {
+            ILExpr ilValue = ExprConverter.buildExpr(cInfo, ((AstExprAsInit) astInit).expr).requirePrimitive();
+
+            if (saType instanceof SAPrimitiveType) {
+                cInfo.table.putVar(declare.varName, saType, SANoInit.instance());
+                var item = cInfo.table.getVar(declare.varName).get();
+
+                return assignExprOnOffset(
+                        item.a, item.b, ilValue);
+
+            } else if (saType.isPrimitiveArray()) {
+                cInfo.table.putVar(declare.varName, saType, SANoInit.instance());
+                var item = cInfo.table.getVar(declare.varName).get();
+
+                return memsetExprOnRange(
+                        item.a, item.b, ilValue);
+            }
+        }
+
+        if (astInit instanceof AstChanInit) {
+            throw new NotSupportedException("暂不支持 chan 初始化");
+        }
+
+        throw new SyntaxException("类型 " + saType.getName() +
+                " 不能用 " + astInit.getClass().getSimpleName() + " 来初始化");
+    }
+
+    private static SAPromelaType extractType(CompileTimeInfo cInfo, AstDeclare declare) {
+        Cell<SAPromelaType> result = Cells.empty();
+
+        SubclassVisitor.visit(
+                declare
+        ).when(AstNormalDeclare.class, x -> {
+            result.v = extractNormalDeclare(cInfo, x);
+        }).when(AstUnsignedDeclare.class, x -> {
+            result.v = extractUnsigned(x);
         }).other(x -> {
-            throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName());
-        }));
+            throw new Unreachable();
+        });
+
+        return result.v;
+    }
+
+    private static SAPromelaType extractNormalDeclare(CompileTimeInfo cInfo, AstNormalDeclare decl) {
+        Optional<ILNamedItem> typeRaw = cInfo.nItems.getItem(decl.typeName);
+        if (typeRaw.isEmpty()) {
+            throw new SyntaxException("名为 " + decl.typeName + " 的类型不存在");
+        } else if (!(typeRaw.get() instanceof SAPromelaType)) {
+            throw new SyntaxException(decl.typeName + " 不是类型名。内部表示为：" +
+                    typeRaw.get().getClass().getSimpleName());
+        }
+
+        SAPromelaType saType = (SAPromelaType) typeRaw.get();
+        // 如果是数组，就上一层 wrapper
+        if (decl.arrayLen > 0) {
+            saType = new SAArrayType(saType, decl.arrayLen);
+        }
+
+        return saType;
+    }
+
+    private static SAPrimitiveType extractUnsigned(AstUnsignedDeclare decl) {
+        return new SAPrimitiveType(
+                "unsigned", false, decl.bitLen, SATypeFactory.allocTypeIdForUnsigned(decl.bitLen)
+        );
+    }
+
+    private static List<ILStatement> assignExprOnOffset(
+            SASymbolTableItem tableItem,
+            boolean isGlobal,
+            ILExpr setTo
+    ) {
+        ILExpr ilOffset = new ILConstExpr(tableItem.startAddr);
+
+        var result = new ArrayList<ILStatement>();
+        result.add(new ILSetDynMemStatement(isGlobal, ilOffset, setTo));
+
+        return result;
+    }
+
+    private static List<ILStatement> memsetExprOnRange(
+            SASymbolTableItem tableItem,
+            boolean isGlobal,
+            ILExpr setTo
+    ) {
+        assert tableItem.type.isPrimitiveArray();
+
+        ILExpr startIn = new ILConstExpr(tableItem.startAddr),
+                endEx = new ILConstExpr(tableItem.startAddr + tableItem.type.getSize());
+
+        var result = new ArrayList<ILStatement>();
+        result.add(new ILSetMemRangeStatement(isGlobal, startIn, endEx, setTo));
 
         return result;
     }

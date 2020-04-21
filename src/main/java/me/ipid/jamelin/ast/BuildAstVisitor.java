@@ -4,10 +4,10 @@ import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.constant.PromelaLanguage.PredefVar;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
-import me.ipid.jamelin.exception.Unreachable;
+import me.ipid.util.errors.Unreachable;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrBaseVisitor;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.*;
-import me.ipid.jamelin.util.NonNullArrayList;
+import me.ipid.util.nonnulls.NonNullArrayList;
 import me.ipid.jamelin.util.PromelaPrintfUtil;
 import me.ipid.util.cell.Cell;
 import me.ipid.util.cell.Cells;
@@ -636,8 +636,8 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
     }
 
     @Override
-    public AstTernaryIfExpr visitAnyExpr_Ternary(AnyExpr_TernaryContext ctx) {
-        return new AstTernaryIfExpr(
+    public AstTernaryExpr visitAnyExpr_Ternary(AnyExpr_TernaryContext ctx) {
+        return new AstTernaryExpr(
                 (AstExpr) visit(ctx.cond),
                 (AstExpr) visit(ctx.ifTrue),
                 (AstExpr) visit(ctx.ifFalse));

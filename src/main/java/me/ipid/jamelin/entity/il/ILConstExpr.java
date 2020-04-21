@@ -5,7 +5,7 @@ import me.ipid.jamelin.execute.*;
 
 public class ILConstExpr implements ILExpr {
 
-    private int num;
+    public final int num;
 
     public ILConstExpr(int num) {
         this.num = num;
