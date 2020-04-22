@@ -1,6 +1,8 @@
 package me.ipid.jamelin.entity.state;
 
-import me.ipid.jamelin.entity.il.*;
+import me.ipid.jamelin.entity.il.ILConstExpr;
+import me.ipid.jamelin.entity.il.ILExpr;
+import me.ipid.jamelin.entity.il.ILStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,15 +20,6 @@ public class TransitionEdge implements Comparable<TransitionEdge> {
         this.to = to;
     }
 
-    public int getPriority() {
-        return priority;
-    }
-
-    public TransitionEdge setPriority(int priority) {
-        this.priority = priority;
-        return this;
-    }
-
     public List<ILStatement> getAction() {
         return action;
     }
@@ -42,6 +35,15 @@ public class TransitionEdge implements Comparable<TransitionEdge> {
 
     public TransitionEdge setCondition(ILExpr condition) {
         this.condition = condition;
+        return this;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public TransitionEdge setPriority(int priority) {
+        this.priority = priority;
         return this;
     }
 

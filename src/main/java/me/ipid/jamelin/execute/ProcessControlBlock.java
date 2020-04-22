@@ -1,7 +1,6 @@
-package me.ipid.jamelin.entity;
+package me.ipid.jamelin.execute;
 
-import me.ipid.jamelin.entity.state.*;
-import me.ipid.jamelin.util.*;
+import me.ipid.jamelin.entity.state.StateNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,21 +18,21 @@ public class ProcessControlBlock {
         this.currState = initialState;
     }
 
-    public int getPid() {
-        return pid;
-    }
-
-    public ProcessControlBlock setPid(int pid) {
-        this.pid = pid;
-        return this;
-    }
-
     public StateNode getCurrState() {
         return currState;
     }
 
     public ProcessControlBlock setCurrState(StateNode currState) {
         this.currState = currState;
+        return this;
+    }
+
+    public int getPid() {
+        return pid;
+    }
+
+    public ProcessControlBlock setPid(int pid) {
+        this.pid = pid;
         return this;
     }
 

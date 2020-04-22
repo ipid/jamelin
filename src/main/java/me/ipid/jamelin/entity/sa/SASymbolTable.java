@@ -72,6 +72,38 @@ public final class SASymbolTable {
         symbolTables.remove(symbolTables.size() - 1);
     }
 
+    public void fillGlobalMemory(List<? super Integer> list) {
+        if (!isInGlobal()) {
+            throw new Error("必须在全局作用域中才能填充全局内存");
+        }
+
+        fillMemoryOfTable(list, symbolTables.get(0));
+    }
+
+    public void fillHistoryLocalMemory(List<? super Integer> list) {
+        if (!isInGlobal()) {
+            throw new Error("必须在全局作用域中才能填充局部内存");
+        }
+
+        for (var table : historyLocalTables) {
+            fillMemoryOfTable(list, table);
+        }
+    }
+
+    /**
+     * 等价于：调用 getVar，并断言获取到的是全局变量。
+     * 如果存在同名的局部变量，将抛出 Error。
+     *
+     * @param name 变量名
+     * @return 符号表项
+     */
+    public Optional<SASymbolTableItem> getGlobalVar(String name) {
+        return getVar(name).map(x -> {
+            assert x.b;
+            return x.a;
+        });
+    }
+
     /**
      * 从符号表中查找指定变量。
      * 会返回该变量“是否是全局变量”的信息。
@@ -114,20 +146,6 @@ public final class SASymbolTable {
         ));
     }
 
-    /**
-     * 等价于：调用 getVar，并断言获取到的是全局变量。
-     * 如果存在同名的局部变量，将抛出 Error。
-     *
-     * @param name 变量名
-     * @return 符号表项
-     */
-    public Optional<SASymbolTableItem> getGlobalVar(String name) {
-        return getVar(name).map(x -> {
-            assert x.b;
-            return x.a;
-        });
-    }
-
     public void resetLocal() {
         if (!isInGlobal()) {
             throw new Error("必须在全局作用域中才能重置局部变量");
@@ -135,24 +153,6 @@ public final class SASymbolTable {
 
         localStartAddr = 0;
         historyLocalTables.clear();
-    }
-
-    public void fillGlobalMemory(List<? super Integer> list) {
-        if (!isInGlobal()) {
-            throw new Error("必须在全局作用域中才能填充全局内存");
-        }
-
-        fillMemoryOfTable(list, symbolTables.get(0));
-    }
-
-    public void fillHistoryLocalMemory(List<? super Integer> list) {
-        if (!isInGlobal()) {
-            throw new Error("必须在全局作用域中才能填充局部内存");
-        }
-
-        for (var table: historyLocalTables) {
-            fillMemoryOfTable(list, table);
-        }
     }
 
     private void fillMemoryOfTable(List<? super Integer> list, LinkedHashMap<String, SASymbolTableItem> table) {

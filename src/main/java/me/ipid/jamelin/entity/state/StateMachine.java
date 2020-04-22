@@ -11,15 +11,6 @@ public class StateMachine {
         start = end = new StateNode();
     }
 
-    public StateNode getStart() {
-        return start;
-    }
-
-    public StateMachine setStart(StateNode start) {
-        this.start = start;
-        return this;
-    }
-
     public StateNode getEnd() {
         return end;
     }
@@ -29,16 +20,25 @@ public class StateMachine {
         return this;
     }
 
-    public StateMachine link(StateNode oldNode, StateNode newNode, List<ILStatement> statements) {
-        TransitionEdge edge = new TransitionEdge(0, newNode);
-        edge.getAction().addAll(statements);
+    public StateNode getStart() {
+        return start;
+    }
 
-        oldNode.getOutEdge().add(edge);
+    public StateMachine setStart(StateNode start) {
+        this.start = start;
         return this;
     }
 
     public StateMachine addEdge(StateNode node, TransitionEdge edge) {
         node.getOutEdge().add(edge);
+        return this;
+    }
+
+    public StateMachine link(StateNode oldNode, StateNode newNode, List<ILStatement> statements) {
+        TransitionEdge edge = new TransitionEdge(0, newNode);
+        edge.getAction().addAll(statements);
+
+        oldNode.getOutEdge().add(edge);
         return this;
     }
 

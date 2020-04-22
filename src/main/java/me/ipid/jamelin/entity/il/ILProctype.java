@@ -2,7 +2,6 @@ package me.ipid.jamelin.entity.il;
 
 import lombok.Getter;
 import me.ipid.jamelin.entity.state.StateMachine;
-import me.ipid.util.lateinit.LateInit;
 
 import java.util.ArrayList;
 import java.util.List;

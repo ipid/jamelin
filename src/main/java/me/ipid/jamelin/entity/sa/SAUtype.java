@@ -14,11 +14,6 @@ public class SAUtype implements SAPromelaType {
     }
 
     @Override
-    public boolean isPrimitiveArray() {
-        return false;
-    }
-
-    @Override
     public String getName() {
         return null;
     }
@@ -26,6 +21,11 @@ public class SAUtype implements SAPromelaType {
     @Override
     public int getSize() {
         return fields.getGlobalLen();
+    }
+
+    @Override
+    public boolean isPrimitiveArray() {
+        return false;
     }
 
     @Override

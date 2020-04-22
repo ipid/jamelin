@@ -12,19 +12,6 @@ public class SATypeFactory {
     // 类似 C 语言，在 Promela 中所有表达式的类型都会被提升为 int 的类型
     // 因此，这一类型会在生成 IL 表达式时大量使用，故使用单例模式将其缓存
     public static SAPrimitiveType promelaInt;
-
-    public static class PrimitiveTypesLib {
-        public static final SAPrimitiveType
-                bit_t = new SAPrimitiveType("bit", false, 1, -1),
-                bool_t = new SAPrimitiveType("bool", false, 1, -2),
-                byte_t = new SAPrimitiveType("byte", false, 8, -3),
-                chan_t = new SAPrimitiveType("chan", false, 8, -4),
-                short_t = new SAPrimitiveType("short", true, 16, -5),
-                int_t = new SAPrimitiveType("int", true, 32, -6),
-                mtype_t = new SAPrimitiveType("mtype", false, 8, -7),
-                pid_t = new SAPrimitiveType("pid", false, 8, -8);
-    }
-
     private int unusedTypeId;
     private Map<Integer, Integer> unsignedTypeId;
 
@@ -92,5 +79,17 @@ public class SATypeFactory {
         int result = inner_allocTypeId();
         unsignedTypeId.put(bitLen, result);
         return result;
+    }
+
+    public static class PrimitiveTypesLib {
+        public static final SAPrimitiveType
+                bit_t = new SAPrimitiveType("bit", false, 1, -1),
+                bool_t = new SAPrimitiveType("bool", false, 1, -2),
+                byte_t = new SAPrimitiveType("byte", false, 8, -3),
+                chan_t = new SAPrimitiveType("chan", false, 8, -4),
+                short_t = new SAPrimitiveType("short", true, 16, -5),
+                int_t = new SAPrimitiveType("int", true, 32, -6),
+                mtype_t = new SAPrimitiveType("mtype", false, 8, -7),
+                pid_t = new SAPrimitiveType("pid", false, 8, -8);
     }
 }

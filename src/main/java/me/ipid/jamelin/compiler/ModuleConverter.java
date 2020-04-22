@@ -1,6 +1,7 @@
 package me.ipid.jamelin.compiler;
 
 import com.google.common.collect.Lists;
+import lombok.Data;
 import lombok.NonNull;
 import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.entity.CompileTimeInfo;
@@ -10,6 +11,7 @@ import me.ipid.jamelin.entity.il.ILPrintf;
 import me.ipid.jamelin.entity.il.ILProctype;
 import me.ipid.jamelin.entity.il.ILStatement;
 import me.ipid.jamelin.entity.sa.SATypeFactory;
+import me.ipid.jamelin.entity.state.StateNode;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.util.tupling.Tuple2;
 import me.ipid.util.visitor.SubclassVisitor;
@@ -34,7 +36,7 @@ public class ModuleConverter {
         }
 
         // 处理全局变量（并收集初始化全局变量的语句）
-        for (AstDeclare declare: program.declares) {
+        for (AstDeclare declare : program.declares) {
             rInfo.initStatements.addAll(DeclareConverter.buildFromDeclare(cInfo, declare));
         }
 
@@ -107,20 +109,11 @@ public class ModuleConverter {
         return Tuple2.of(ilProc, astProc.active);
     }
 
-    private static void handleStatement(
-            CompileTimeInfo cInfo, ILProctype ilProc, AstStatement astStatement
+    private static void handleAssignment(
+            CompileTimeInfo cInfo, ILProctype ilProc, AstAssignment assign
     ) {
-        SubclassVisitor.visit(
-                astStatement
-        ).when(AstDeclareStatement.class, x -> {
-            handleDeclareStatement(cInfo, ilProc, x);
-        }).when(AstPrintfStatement.class, x -> {
-            handlePrintfStatement(cInfo, ilProc, x);
-        }).when(AstAssignment.class, x -> {
-            handleAssignment(cInfo, ilProc, x);
-        }).other(x -> {
-            throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName() + " 语句类型");
-        });
+        var exprList = AssignConverter.buildAssign(cInfo, assign);
+        ilProc.stateMachine.linkToNewEnd(exprList);
     }
 
     private static void handleDeclareStatement(
@@ -147,10 +140,24 @@ public class ModuleConverter {
         ilProc.stateMachine.linkToNewEnd(Lists.newArrayList(ilPrintf));
     }
 
-    private static void handleAssignment(
-            CompileTimeInfo cInfo, ILProctype ilProc, AstAssignment assign
+    private static void handleStatement(
+            CompileTimeInfo cInfo, ILProctype ilProc, AstStatement astStatement
     ) {
-        var exprList = AssignConverter.buildAssign(cInfo, assign);
-        ilProc.stateMachine.linkToNewEnd(exprList);
+        SubclassVisitor.visit(
+                astStatement
+        ).when(AstDeclareStatement.class, x -> {
+            handleDeclareStatement(cInfo, ilProc, x);
+        }).when(AstPrintfStatement.class, x -> {
+            handlePrintfStatement(cInfo, ilProc, x);
+        }).when(AstAssignment.class, x -> {
+            handleAssignment(cInfo, ilProc, x);
+        }).other(x -> {
+            throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName() + " 语句类型");
+        });
+    }
+
+    public static final @Data
+    class BuildStatementResult {
+        public final StateNode node;
     }
 }

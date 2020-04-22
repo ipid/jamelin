@@ -1,8 +1,8 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.entity.ProcessControlBlock;
 import me.ipid.jamelin.execute.JamelinKernel;
-import me.ipid.util.errors.Unreachable;
+import me.ipid.jamelin.execute.ProcessControlBlock;
+import me.ipid.jamelin.util.NumberDowncaster;
 
 public class ILConvertExpr implements ILExpr {
 
@@ -33,31 +33,14 @@ public class ILConvertExpr implements ILExpr {
         return (num & (num - 1)) == 0;
     }
 
-    private int calcSigned(int newValue) {
-        // 利用 JVM，实现带符号数据长度转换的功能
-        if (bitLen == 8) {
-            return (byte) newValue;
-        } else if (bitLen == 16) {
-            return (short) newValue;
-        } else if (bitLen == 32) {
-            return newValue;
-        } else {
-            throw new Unreachable();
-        }
-    }
-
-    private int calcUnsigned(int newValue) {
-        return newValue & ((1 << bitLen) - 1);
-    }
-
     @Override
     public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
         int value = expr.execute(kernel, procInfo);
 
         if (signed) {
-            return calcSigned(value);
+            return NumberDowncaster.castSigned(bitLen, value);
         } else {
-            return calcUnsigned(value);
+            return NumberDowncaster.castUnsigned(bitLen, value);
         }
     }
 }

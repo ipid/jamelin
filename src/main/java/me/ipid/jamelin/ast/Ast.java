@@ -43,7 +43,6 @@ public class Ast {
     public interface AstVarRef extends AstNode {
     }
 
-
     public static final @Data
     class AstAdditionStatement implements AstAssignment {
         public final @NonNull AstVarRef target;

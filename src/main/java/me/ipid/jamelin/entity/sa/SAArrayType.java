@@ -19,11 +19,6 @@ public class SAArrayType implements SAPromelaType {
     }
 
     @Override
-    public boolean isPrimitiveArray() {
-        return type instanceof SAPrimitiveType;
-    }
-
-    @Override
     public int getSize() {
         return arrLen * type.getSize();
     }
@@ -31,6 +26,11 @@ public class SAArrayType implements SAPromelaType {
     @Override
     public int getTypeId() {
         return type.getTypeId();
+    }
+
+    @Override
+    public boolean isPrimitiveArray() {
+        return type instanceof SAPrimitiveType;
     }
 
     @Override

@@ -41,19 +41,19 @@ public class ExprConverter {
         return result.get();
     }
 
+    private static SATypedExpr buildBinaryExpr(CompileTimeInfo cInfo, AstBinaryExpr binary) {
+        BinaryOp op = Objects.requireNonNull(BinaryOp.fromText.get(binary.op));
+        ILExpr a = buildExpr(cInfo, binary.a).expr, b = buildExpr(cInfo, binary.b).expr;
+
+        return wrapInt(new ILBinaryExpr(a, b, op));
+    }
+
     private static SATypedExpr buildTernaryExpr(CompileTimeInfo cInfo, AstTernaryExpr x) {
         return wrapInt(new ILTernaryExpr(
                 buildExpr(cInfo, x.cond).expr,
                 buildExpr(cInfo, x.ifTrue).expr,
                 buildExpr(cInfo, x.ifFalse).expr
         ));
-    }
-
-    private static SATypedExpr buildBinaryExpr(CompileTimeInfo cInfo, AstBinaryExpr binary) {
-        BinaryOp op = Objects.requireNonNull(BinaryOp.fromText.get(binary.op));
-        ILExpr a = buildExpr(cInfo, binary.a).expr, b = buildExpr(cInfo, binary.b).expr;
-
-        return wrapInt(new ILBinaryExpr(a, b, op));
     }
 
     private static SATypedExpr buildUnaryExpr(CompileTimeInfo cInfo, AstUnaryExpr unary) {

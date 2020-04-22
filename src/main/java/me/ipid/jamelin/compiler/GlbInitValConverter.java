@@ -53,29 +53,9 @@ public class GlbInitValConverter {
                 throw new SyntaxException("原始类型不能用初始化列表来初始化");
             }
 
-            result.set(initListOnArray((SAArrayType)saType, initList));
+            result.set(initListOnArray((SAArrayType) saType, initList));
 
         }).other(x -> {
-            throw new Unreachable();
-        });
-
-        return result.get();
-    }
-
-    private static SAInitVal singleNumOnAnyType(SAPromelaType saType, int num) {
-        LateInit<SAInitVal> result = new LateInit<>();
-
-        SubclassVisitor.visit(
-                saType
-        ).when(SAArrayType.class, saArr -> {
-            // 如果类型为数组，就将 num 重复 saArr 中的数组长度那么多遍
-            result.set(new SAInitList(
-                    IntStream.range(0, saArr.arrLen).map(anything -> num).toArray()
-            ));
-        }).when(SAPrimitiveType.class, saPrim -> {
-            // 如果类型为 primitive，那也太简单了
-            result.set(new SASingleInitVal(num));
-        }).other(anything -> {
             throw new Unreachable();
         });
 
@@ -97,9 +77,29 @@ public class GlbInitValConverter {
                 throw new SyntaxException("数组用初始化列表初始化时，列表中的值必须是常量");
             }
 
-            arr[i] = ((AstConstExpr)initList.exprs.get(i)).num;
+            arr[i] = ((AstConstExpr) initList.exprs.get(i)).num;
         }
 
         return new SAInitList(arr);
+    }
+
+    private static SAInitVal singleNumOnAnyType(SAPromelaType saType, int num) {
+        LateInit<SAInitVal> result = new LateInit<>();
+
+        SubclassVisitor.visit(
+                saType
+        ).when(SAArrayType.class, saArr -> {
+            // 如果类型为数组，就将 num 重复 saArr 中的数组长度那么多遍
+            result.set(new SAInitList(
+                    IntStream.range(0, saArr.arrLen).map(anything -> num).toArray()
+            ));
+        }).when(SAPrimitiveType.class, saPrim -> {
+            // 如果类型为 primitive，那也太简单了
+            result.set(new SASingleInitVal(num));
+        }).other(anything -> {
+            throw new Unreachable();
+        });
+
+        return result.get();
     }
 }

@@ -1,16 +1,15 @@
 package me.ipid.jamelin.execute;
 
-import me.ipid.jamelin.ast.Ast.AstProctype;
-import me.ipid.jamelin.entity.*;
+import me.ipid.jamelin.entity.RuntimeInfo;
 import me.ipid.jamelin.entity.il.ILProctype;
 import me.ipid.jamelin.entity.il.ILStatement;
-import me.ipid.jamelin.entity.state.*;
-import me.ipid.jamelin.util.*;
+import me.ipid.jamelin.entity.state.TransitionEdge;
 import me.ipid.util.tupling.Tuple2;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.tuple.Tuple2;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class JamelinKernel {
 
@@ -21,7 +20,7 @@ public class JamelinKernel {
 
     public JamelinKernel(RuntimeInfo info) {
         this.info = info;
-        this.globalMemory = new ArrayList<Integer>(info.globalMemory);
+        this.globalMemory = new ArrayList<>(info.globalMemory);
 
         this.pcbList = new ArrayList<>();
         fillPcbList(info.activeProcs, this.pcbList);
@@ -31,25 +30,14 @@ public class JamelinKernel {
         return globalMemory.get(offset);
     }
 
-    public void setGlobalMemory(int offset, int newValue) {
-        globalMemory.set(offset, newValue);
-    }
-
-    private static void fillPcbList(
-            List<ILProctype> procs, List<ProcessControlBlock> pcbList) {
-        int pid = 0;
-
-        for (var proc : procs) {
-            pcbList.add(new ProcessControlBlock(pid, new ArrayList<>(), proc.stateMachine.getStart()));
-            pid++;
-        }
-    }
-
     public ProcessControlBlock getPcb(int i) {
         return pcbList.get(i);
     }
 
     public void run() {
+        // 调用初始化语句
+        runInitStatements();
+
         while (true) {
             boolean res = runOnce();
             if (!res) {
@@ -78,6 +66,20 @@ public class JamelinKernel {
         return true;
     }
 
+    public void setGlobalMemory(int offset, int newValue) {
+        globalMemory.set(offset, newValue);
+    }
+
+    private static void fillPcbList(
+            List<ILProctype> procs, List<ProcessControlBlock> pcbList) {
+        int pid = 0;
+
+        for (var proc : procs) {
+            pcbList.add(new ProcessControlBlock(pid, new ArrayList<>(), proc.stateMachine.getStart()));
+            pid++;
+        }
+    }
+
     private Optional<Tuple2<ProcessControlBlock, TransitionEdge>> findExecutable() {
 
         int count = 0;
@@ -101,5 +103,13 @@ public class JamelinKernel {
         }
 
         return result;
+    }
+
+    private void runInitStatements() {
+        ProcessControlBlock pcb = new MockPCB();
+
+        for (ILStatement statement : info.initStatements) {
+            statement.execute(this, pcb);
+        }
     }
 }

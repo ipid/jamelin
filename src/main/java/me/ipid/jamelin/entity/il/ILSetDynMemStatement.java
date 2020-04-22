@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.entity.ProcessControlBlock;
 import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILSetDynMemStatement implements ILStatement {
 
@@ -17,8 +17,12 @@ public class ILSetDynMemStatement implements ILStatement {
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
         int value = valueExpr.execute(kernel, procInfo),
-        offset = offsetExpr.execute(kernel, procInfo);
+                offset = offsetExpr.execute(kernel, procInfo);
 
-        throw new Error("TODO");
+        if (global) {
+            kernel.setGlobalMemory(offset, value);
+        } else {
+            procInfo.setProcessMemory(offset, value);
+        }
     }
 }

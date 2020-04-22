@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.entity.ProcessControlBlock;
 import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILSetMemRangeStatement implements ILStatement {
 

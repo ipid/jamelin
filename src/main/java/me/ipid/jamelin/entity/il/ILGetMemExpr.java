@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.execute.*;
+import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILGetMemExpr implements ILExpr {
     private boolean global;
@@ -12,12 +12,12 @@ public class ILGetMemExpr implements ILExpr {
         this.memOffset = memOffset;
     }
 
-    public boolean isGlobal() {
-        return global;
-    }
-
     public int getMemOffset() {
         return memOffset;
+    }
+
+    public boolean isGlobal() {
+        return global;
     }
 
     @Override

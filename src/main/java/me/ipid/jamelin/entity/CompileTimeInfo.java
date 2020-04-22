@@ -1,8 +1,8 @@
 package me.ipid.jamelin.entity;
 
 import lombok.NonNull;
-import me.ipid.jamelin.entity.sa.SASymbolTable;
 import me.ipid.jamelin.entity.sa.SAPromelaType;
+import me.ipid.jamelin.entity.sa.SASymbolTable;
 
 import java.util.Map;
 

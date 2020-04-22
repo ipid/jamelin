@@ -71,27 +71,17 @@ public final class DeclareConverter {
         return result.v;
     }
 
-    private static List<ILStatement> buildFromUnsignedDeclare(CompileTimeInfo cInfo, AstUnsignedDeclare dec) {
-        // 放入符号表
-        var type = extractUnsigned(dec);
-        cInfo.table.putVar(dec.varName, type, SANoInit.instance());
-        var item = cInfo.table.getVar(dec.varName).get();
+    private static List<ILStatement> assignExprOnOffset(
+            SASymbolTableItem tableItem,
+            boolean isGlobal,
+            ILExpr setTo
+    ) {
+        ILExpr ilOffset = new ILConstExpr(tableItem.startAddr);
 
-        // 生成赋值语句
-        if (dec.varInit.isEmpty()) {
-            return new ArrayList<>();
-        }
-        var initVal = dec.varInit.get();
-        if (initVal instanceof AstExprAsInit) {
-            // 生成一条简单的赋值语句
-            var exprInitVal = (AstExprAsInit) initVal;
-            ILExpr ilValue = ExprConverter.buildExpr(cInfo, exprInitVal.expr).expr;
+        var result = new ArrayList<ILStatement>();
+        result.add(new ILSetDynMemStatement(isGlobal, ilOffset, setTo));
 
-            return assignExprOnOffset(
-                    item.a, item.b, ilValue);
-        }
-
-        throw new SyntaxException("unsigned 变量不能用 " + initVal.getClass().getSimpleName() + " 初始化");
+        return result;
     }
 
     private static List<ILStatement> buildFromNormalDeclare(
@@ -148,20 +138,27 @@ public final class DeclareConverter {
                 " 不能用 " + astInit.getClass().getSimpleName() + " 来初始化");
     }
 
-    private static SAPromelaType extractType(CompileTimeInfo cInfo, AstDeclare declare) {
-        Cell<SAPromelaType> result = Cells.empty();
+    private static List<ILStatement> buildFromUnsignedDeclare(CompileTimeInfo cInfo, AstUnsignedDeclare dec) {
+        // 放入符号表
+        var type = extractUnsigned(dec);
+        cInfo.table.putVar(dec.varName, type, SANoInit.instance());
+        var item = cInfo.table.getVar(dec.varName).get();
 
-        SubclassVisitor.visit(
-                declare
-        ).when(AstNormalDeclare.class, x -> {
-            result.v = extractNormalDeclare(cInfo, x);
-        }).when(AstUnsignedDeclare.class, x -> {
-            result.v = extractUnsigned(x);
-        }).other(x -> {
-            throw new Unreachable();
-        });
+        // 生成赋值语句
+        if (dec.varInit.isEmpty()) {
+            return new ArrayList<>();
+        }
+        var initVal = dec.varInit.get();
+        if (initVal instanceof AstExprAsInit) {
+            // 生成一条简单的赋值语句
+            var exprInitVal = (AstExprAsInit) initVal;
+            ILExpr ilValue = ExprConverter.buildExpr(cInfo, exprInitVal.expr).expr;
 
-        return result.v;
+            return assignExprOnOffset(
+                    item.a, item.b, ilValue);
+        }
+
+        throw new SyntaxException("unsigned 变量不能用 " + initVal.getClass().getSimpleName() + " 初始化");
     }
 
     private static SAPromelaType extractNormalDeclare(CompileTimeInfo cInfo, AstNormalDeclare decl) {
@@ -182,23 +179,26 @@ public final class DeclareConverter {
         return saType;
     }
 
+    private static SAPromelaType extractType(CompileTimeInfo cInfo, AstDeclare declare) {
+        Cell<SAPromelaType> result = Cells.empty();
+
+        SubclassVisitor.visit(
+                declare
+        ).when(AstNormalDeclare.class, x -> {
+            result.v = extractNormalDeclare(cInfo, x);
+        }).when(AstUnsignedDeclare.class, x -> {
+            result.v = extractUnsigned(x);
+        }).other(x -> {
+            throw new Unreachable();
+        });
+
+        return result.v;
+    }
+
     private static SAPrimitiveType extractUnsigned(AstUnsignedDeclare decl) {
         return new SAPrimitiveType(
                 "unsigned", false, decl.bitLen, SATypeFactory.allocTypeIdForUnsigned(decl.bitLen)
         );
-    }
-
-    private static List<ILStatement> assignExprOnOffset(
-            SASymbolTableItem tableItem,
-            boolean isGlobal,
-            ILExpr setTo
-    ) {
-        ILExpr ilOffset = new ILConstExpr(tableItem.startAddr);
-
-        var result = new ArrayList<ILStatement>();
-        result.add(new ILSetDynMemStatement(isGlobal, ilOffset, setTo));
-
-        return result;
     }
 
     private static List<ILStatement> memsetExprOnRange(

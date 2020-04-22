@@ -1,9 +1,8 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.constant.*;
 import me.ipid.jamelin.constant.PromelaLanguage.BinaryOp;
-import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.execute.*;
+import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILBinaryExpr implements ILExpr {
 

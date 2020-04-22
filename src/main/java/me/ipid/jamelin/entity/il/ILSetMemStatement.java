@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.entity.*;
-import me.ipid.jamelin.execute.*;
+import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILSetMemStatement implements ILStatement {
 
@@ -15,16 +15,16 @@ public class ILSetMemStatement implements ILStatement {
         this.valueExpr = valueExpr;
     }
 
-    public boolean isGlobal() {
-        return global;
-    }
-
     public int getOffset() {
         return offset;
     }
 
     public ILExpr getValueExpr() {
         return valueExpr;
+    }
+
+    public boolean isGlobal() {
+        return global;
     }
 
     @Override

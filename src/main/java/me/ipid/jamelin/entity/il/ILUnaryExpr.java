@@ -1,8 +1,8 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.constant.PromelaLanguage.UnaryOp;
-import me.ipid.jamelin.entity.ProcessControlBlock;
 import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILUnaryExpr implements ILExpr {
 

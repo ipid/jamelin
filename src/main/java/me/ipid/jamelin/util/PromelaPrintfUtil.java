@@ -1,18 +1,13 @@
 package me.ipid.jamelin.util;
 
 import com.google.common.collect.Lists;
-import me.ipid.jamelin.compiler.PrintConverter.*;
-import me.ipid.jamelin.exception.*;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 
 public class PromelaPrintfUtil {
 
-    private enum State {
-        INITIAL, PERCENT
-    }
-
     /**
      * 解析 Promela 中 printf 的模板字符串。
+     *
      * @param printTemplate 模板字符串（已 unescape，不含两端的引号）
      * @return % 参数的个数
      */
@@ -38,5 +33,9 @@ public class PromelaPrintfUtil {
         }
 
         return index;
+    }
+
+    private enum State {
+        INITIAL, PERCENT
     }
 }

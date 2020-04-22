@@ -10,8 +10,8 @@ import me.ipid.jamelin.ast.Ast.AstProgram;
 import me.ipid.jamelin.ast.BuildAstVisitor;
 import me.ipid.jamelin.compiler.ModuleConverter;
 import me.ipid.jamelin.entity.RuntimeInfo;
-import me.ipid.jamelin.exception.CompileExceptions;
 import me.ipid.jamelin.exception.CompileExceptions.CompileException;
+import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
 import me.ipid.jamelin.execute.JamelinKernel;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
@@ -43,6 +43,57 @@ public class Main {
         }
 
         new Main().run(args[0]);
+    }
+
+    private SpecContext getParseTree(String content) {
+        // 初始化 ANTLR 的一系列类
+        CharStream stream = CharStreams.fromString(content);
+        PromelaAntlrLexer lexer = new PromelaAntlrLexer(stream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        PromelaAntlrParser parser = new PromelaAntlrParser(tokens);
+
+        // 改变 ANTLR 的错误识别逻辑
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+
+        AntlrErrorListener errorListener = new AntlrErrorListener();
+        lexer.addErrorListener(errorListener);
+        parser.addErrorListener(errorListener);
+
+        // 生成解析树
+        PromelaAntlrParser.SpecContext tree = parser.spec();
+
+        // 将语法错误打印给用户
+        if (errorListener.isErrorHappened()) {
+            for (String errMsg : errorListener.getErrorList()) {
+                logger.error(errMsg);
+            }
+            System.exit(1);
+        }
+
+        return tree;
+    }
+
+    private String readFile(String filePath) {
+        File file = new File(filePath);
+
+        // 如果文件大小大于 16M
+        if (file.length() > fileSizeLimit) {
+            logger.error("文件过大。");
+            System.exit(1);
+        }
+
+        // 将文件一次性读入 String 中
+        CharSource charSource = Files.asCharSource(file, Charsets.UTF_8);
+        String content = null;
+        try {
+            content = charSource.read();
+        } catch (IOException ioe) {
+            logger.error("读取文件时发生错误。");
+            System.exit(1);
+        }
+
+        return content;
     }
 
     /**
@@ -81,57 +132,11 @@ public class Main {
 
         logger.debug("开始运行");
         JamelinKernel kernel = new JamelinKernel(rInfo);
-        kernel.run();
-    }
-
-    private String readFile(String filePath) {
-        File file = new File(filePath);
-
-        // 如果文件大小大于 16M
-        if (file.length() > fileSizeLimit) {
-            logger.error("文件过大。");
-            System.exit(1);
-        }
-
-        // 将文件一次性读入 String 中
-        CharSource charSource = Files.asCharSource(file, Charsets.UTF_8);
-        String content = null;
         try {
-            content = charSource.read();
-        } catch (IOException ioe) {
-            logger.error("读取文件时发生错误。");
+            kernel.run();
+        } catch (JamelinRuntimeException e) {
+            logger.error("运行错误：" + e.getMessage());
             System.exit(1);
         }
-
-        return content;
-    }
-
-    private PromelaAntlrParser.SpecContext getParseTree(String content) {
-        // 初始化 ANTLR 的一系列类
-        CharStream stream = CharStreams.fromString(content);
-        PromelaAntlrLexer lexer = new PromelaAntlrLexer(stream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        PromelaAntlrParser parser = new PromelaAntlrParser(tokens);
-
-        // 改变 ANTLR 的错误识别逻辑
-        lexer.removeErrorListeners();
-        parser.removeErrorListeners();
-
-        AntlrErrorListener errorListener = new AntlrErrorListener();
-        lexer.addErrorListener(errorListener);
-        parser.addErrorListener(errorListener);
-
-        // 生成解析树
-        PromelaAntlrParser.SpecContext tree = parser.spec();
-
-        // 将语法错误打印给用户
-        if (errorListener.isErrorHappened()) {
-            for (String errMsg : errorListener.getErrorList()) {
-                logger.error(errMsg);
-            }
-            System.exit(1);
-        }
-
-        return tree;
     }
 }

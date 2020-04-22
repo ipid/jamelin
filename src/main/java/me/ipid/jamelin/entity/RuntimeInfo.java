@@ -2,7 +2,6 @@ package me.ipid.jamelin.entity;
 
 import me.ipid.jamelin.entity.il.ILProctype;
 import me.ipid.jamelin.entity.il.ILStatement;
-import me.ipid.util.lateinit.LateInit;
 
 import java.util.ArrayList;
 import java.util.List;

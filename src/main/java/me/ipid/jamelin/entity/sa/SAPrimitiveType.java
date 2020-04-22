@@ -27,13 +27,13 @@ public class SAPrimitiveType implements SAPromelaType {
     }
 
     @Override
-    public boolean isPrimitiveArray() {
-        return false;
+    public int getSize() {
+        return 1;
     }
 
     @Override
-    public int getSize() {
-        return 1;
+    public boolean isPrimitiveArray() {
+        return false;
     }
 
     @Override
