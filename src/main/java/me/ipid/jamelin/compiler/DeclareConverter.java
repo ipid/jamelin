@@ -30,7 +30,8 @@ public final class DeclareConverter {
             throw new SyntaxException("定义新类型错误：名称 " + astUtype.newTypeName + " 冲突");
         }
 
-        SAUtype saUtype = new SAUtype(SATypeFactory.allocTypeId());
+        // 创建 utype 对象
+        SAUtype saUtype = new SAUtype(astUtype.newTypeName, SATypeFactory.allocTypeId());
 
         // 逐条处理 AST 中的声明
         for (AstDeclare astDeclare : astUtype.members) {
@@ -42,8 +43,7 @@ public final class DeclareConverter {
 
             // 提取类型、初值
             SAPromelaType fieldType = extractType(cInfo, astDeclare);
-            var astInit = astDeclare.getVarInit();
-            var saInit = GlbInitValConverter.buildInitValInUtype(fieldType, astInit);
+            var saInit = GlbInitValConverter.buildInitValInUtype(fieldType, astDeclare.getVarInit());
 
             // 放入当前 utype 的符号表中
             saUtype.fields.putVar(astDeclare.getVarName(), fieldType, saInit);
@@ -172,7 +172,9 @@ public final class DeclareConverter {
 
         SAPromelaType saType = (SAPromelaType) typeRaw.get();
         // 如果是数组，就上一层 wrapper
-        if (decl.arrayLen > 0) {
+        if (decl.arrayLen == 0) {
+            throw new SyntaxException("Promela 不允许零长数组");
+        } else if (decl.arrayLen > 0) {
             saType = new SAArrayType(saType, decl.arrayLen);
         }
 

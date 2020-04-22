@@ -16,6 +16,7 @@ import me.ipid.util.lateinit.LateInit;
 import me.ipid.util.visitor.SubclassVisitor;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class ExprConverter {
 
@@ -34,11 +35,31 @@ public class ExprConverter {
             result.set(buildVarRefExpr(cInfo, x));
         }).when(AstTernaryExpr.class, x -> {
             result.set(buildTernaryExpr(cInfo, x));
+        }).when(AstRunExpr.class, x -> {
+            result.set(buildRunExpr(cInfo, x));
         }).other(x -> {
             throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName() + " 表达式");
         });
 
         return result.get();
+    }
+
+    private static SATypedExpr buildRunExpr(CompileTimeInfo cInfo, AstRunExpr x) {
+        if (!x.args.isEmpty()) {
+            throw new NotSupportedException("暂不支持带参数运行进程");
+        }
+        if (x.priority.isPresent()) {
+            throw new NotSupportedException("暂不支持带优先级运行进程");
+        }
+
+        Optional<ILNamedItem> item = cInfo.nItems.getItem(x.procName);
+        if (item.isEmpty()) {
+            throw new SyntaxException("不存在名为 " + x.procName + " 的进程，无法 run 该进程");
+        } else if (!(item.get() instanceof ILProctype)) {
+            throw new SyntaxException(x.procName + " 不是进程，不能 run");
+        }
+
+        return wrapInt(new ILRunExpr(cInfo.nItems.getSerialNumOfProc(x.procName)));
     }
 
     private static SATypedExpr buildBinaryExpr(CompileTimeInfo cInfo, AstBinaryExpr binary) {

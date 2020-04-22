@@ -170,8 +170,19 @@ public final class SASymbolTable {
             }, noInit -> {
                 if (item.type instanceof SAUtype) {
                     // Utype 的初始值不存在其上级符号表中，而是存在类型内部
-                    var utype = ((SAUtype) item.type);
+                    var utype = (SAUtype) item.type;
                     utype.fields.fillGlobalMemory(list);
+
+                }else if (item.type instanceof SAArrayType &&
+                        ((SAArrayType) item.type).type instanceof SAUtype) {
+                    // Utype Array 也要递归填写初始值
+                    var saArr = (SAArrayType) item.type;
+                    SAUtype arrOfUtype = (SAUtype)saArr.type;
+
+                    for (int i = 0; i < saArr.arrLen; i++) {
+                        arrOfUtype.fields.fillGlobalMemory(list);
+                    }
+
                 } else {
                     // 没有初始值，按照大小填 0
                     int size = item.type.getSize();

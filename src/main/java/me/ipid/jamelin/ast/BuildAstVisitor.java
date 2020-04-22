@@ -18,7 +18,6 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -706,7 +705,7 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
     public AstRunExpr visitAnyExpr_Run(AnyExpr_RunContext ctx) {
         List<AstExpr> args;
         if (ctx.argList() == null) {
-            args = new ArrayList<>();
+            args = new NonNullArrayList<>();
         } else {
             args = buildAnyExprList(ctx.argList().anyExpr());
         }

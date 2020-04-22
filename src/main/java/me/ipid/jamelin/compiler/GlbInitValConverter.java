@@ -4,6 +4,7 @@ import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.entity.sa.*;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
+import me.ipid.jamelin.util.NumberDowncaster;
 import me.ipid.util.errors.Unreachable;
 import me.ipid.util.lateinit.LateInit;
 import me.ipid.util.visitor.SubclassVisitor;
@@ -63,8 +64,6 @@ public class GlbInitValConverter {
     }
 
     public static SAInitList initListOnArray(SAArrayType saArr, AstInitializerList initList) {
-        assert saArr.isPrimitiveArray();
-
         // initList 可以比数组长度短，多余部分是 0
         if (initList.exprs.size() > saArr.arrLen) {
             throw new SyntaxException("初始化列表中的表达式太多，多于数组长度");
@@ -77,29 +76,38 @@ public class GlbInitValConverter {
                 throw new SyntaxException("数组用初始化列表初始化时，列表中的值必须是常量");
             }
 
-            arr[i] = ((AstConstExpr) initList.exprs.get(i)).num;
+            // 将初始值转为对应类型的初始值
+            int rawNum = ((AstConstExpr) initList.exprs.get(i)).num;
+            arr[i] = castNumToType((SAPrimitiveType) saArr.type, rawNum);
         }
 
         return new SAInitList(arr);
     }
 
-    private static SAInitVal singleNumOnAnyType(SAPromelaType saType, int num) {
+    private static SAInitVal singleNumOnAnyType(SAPromelaType saType, int rawNum) {
         LateInit<SAInitVal> result = new LateInit<>();
 
         SubclassVisitor.visit(
                 saType
         ).when(SAArrayType.class, saArr -> {
+            // 只有原始类型的数组能够设置单表达式初值
+            int num = castNumToType((SAPrimitiveType)saArr.type, rawNum);
+
             // 如果类型为数组，就将 num 重复 saArr 中的数组长度那么多遍
             result.set(new SAInitList(
                     IntStream.range(0, saArr.arrLen).map(anything -> num).toArray()
             ));
         }).when(SAPrimitiveType.class, saPrim -> {
             // 如果类型为 primitive，那也太简单了
-            result.set(new SASingleInitVal(num));
+            result.set(new SASingleInitVal(castNumToType(saPrim, rawNum)));
         }).other(anything -> {
             throw new Unreachable();
         });
 
         return result.get();
+    }
+
+    private static int castNumToType(SAPrimitiveType pType, int rawNum) {
+        return NumberDowncaster.cast(pType.signed, pType.bitLen, rawNum);
     }
 }

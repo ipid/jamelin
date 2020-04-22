@@ -28,26 +28,4 @@ public class StateMachine {
         this.start = start;
         return this;
     }
-
-    public StateMachine addEdge(StateNode node, TransitionEdge edge) {
-        node.getOutEdge().add(edge);
-        return this;
-    }
-
-    public StateMachine link(StateNode oldNode, StateNode newNode, List<ILStatement> statements) {
-        TransitionEdge edge = new TransitionEdge(0, newNode);
-        edge.getAction().addAll(statements);
-
-        oldNode.getOutEdge().add(edge);
-        return this;
-    }
-
-    public StateMachine linkToNewEnd(List<ILStatement> statements) {
-        StateNode newNode = new StateNode();
-
-        link(end, newNode, statements);
-        end = newNode;
-
-        return this;
-    }
 }

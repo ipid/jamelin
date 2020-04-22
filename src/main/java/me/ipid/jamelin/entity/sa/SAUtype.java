@@ -8,14 +8,13 @@ public class SAUtype implements SAPromelaType {
     @Getter
     public final int typeId;
 
-    public SAUtype(int typeId) {
+    @Getter
+    public final String name;
+
+    public SAUtype(String name, int typeId) {
         this.fields = new SASymbolTable(false);
         this.typeId = typeId;
-    }
-
-    @Override
-    public String getName() {
-        return null;
+        this.name = name;
     }
 
     @Override

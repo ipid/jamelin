@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class MockPCB extends ProcessControlBlock {
 
     public MockPCB() {
-        super(0, new ArrayList<>(), new StateNode());
+        super("MockPCB", 0, new ArrayList<>(), new StateNode(), new StateNode());
     }
 
     @Override

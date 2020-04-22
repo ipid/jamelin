@@ -3,27 +3,55 @@ package me.ipid.jamelin.execute;
 import me.ipid.jamelin.entity.RuntimeInfo;
 import me.ipid.jamelin.entity.il.ILProctype;
 import me.ipid.jamelin.entity.il.ILStatement;
+import me.ipid.jamelin.entity.state.StateNode;
 import me.ipid.jamelin.entity.state.TransitionEdge;
+import me.ipid.jamelin.exception.CompileExceptions.OutOfLimitException;
 import me.ipid.util.tupling.Tuple2;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class JamelinKernel {
+
+    private static final Logger log = LogManager.getLogger(JamelinKernel.class);
+    private static final int MAX_PID_INCLUSIVE = 255;
 
     // 保留 RuntimeInfo，用于支持 run 等表达式
     private final RuntimeInfo info;
     private final ArrayList<Integer> globalMemory;
-    private final List<ProcessControlBlock> pcbList;
+    private final List<ProcessControlBlock> pcbList, nextTickNewPcbs;
+    private final Deque<Integer> unusedPid;
 
     public JamelinKernel(RuntimeInfo info) {
         this.info = info;
         this.globalMemory = new ArrayList<>(info.globalMemory);
 
         this.pcbList = new ArrayList<>();
-        fillPcbList(info.activeProcs, this.pcbList);
+        this.nextTickNewPcbs = new ArrayList<>();
+        int lastUnusedPid = fillPcbList(info.activeProcs, this.pcbList);
+
+        this.unusedPid = new LinkedList<>();
+        for (int i = lastUnusedPid; i <= MAX_PID_INCLUSIVE; i++) {
+            unusedPid.push(i);
+        }
+    }
+
+    /**
+     * 启动一个新进程。
+     */
+    public int createProcess(int procSerialNum) {
+        if (unusedPid.isEmpty()) {
+            throw new OutOfLimitException("pid 已经用尽，无法创建新进程");
+        }
+
+        int pid = unusedPid.pop();
+        ILProctype proc = info.procs.get(procSerialNum);
+        nextTickNewPcbs.add(new ProcessControlBlock(
+                proc.name, pid, proc.memory, proc.getStart(), proc.getEnd()));
+
+        return pid;
     }
 
     public int getGlobalMemory(int offset) {
@@ -44,6 +72,8 @@ public class JamelinKernel {
                 break;
             }
         }
+
+        log.debug("所有语句执行完毕");
     }
 
     /**
@@ -52,16 +82,29 @@ public class JamelinKernel {
      * @return 布尔值，True 表示本次执行了一次转移，False 表示本次找不到可执行的转移边
      */
     public boolean runOnce() {
-        Optional<Tuple2<ProcessControlBlock, TransitionEdge>> maybeNext = findExecutable();
+        var maybeNext = findExecutable();
         if (maybeNext.isEmpty()) {
+            log.debug("找不到可执行的语句");
             return false;
         }
+
         Tuple2<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
+        log.debug("执行来自 <" + next.a.name + "> 进程的 " + next.b.getAction().size() + " 条语句");
 
         for (ILStatement statement : next.b.getAction()) {
             statement.execute(this, next.a);
         }
         next.a.setCurrState(next.b.getTo());
+
+        if (next.a.getCurrState() == next.a.end) {
+            // 进程运行结束，清理 PCB
+            log.debug("<" + next.a.name + "> 进程运行结束");
+            pcbList.remove(next.a);
+        }
+
+        // 如果刚刚调用了 run 语句，则将 nextTickNewPcbs 中的内容加入 pcbList
+        pcbList.addAll(nextTickNewPcbs);
+        nextTickNewPcbs.clear();
 
         return true;
     }
@@ -70,14 +113,28 @@ public class JamelinKernel {
         globalMemory.set(offset, newValue);
     }
 
-    private static void fillPcbList(
+    /**
+     * 通过 ILProctype 对象建立 PCB 块。
+     *
+     * @param procs   ILProctype 列表
+     * @param pcbList PCB 块列表
+     * @return 最后一个未被使用的 pid
+     */
+    private static int fillPcbList(
             List<ILProctype> procs, List<ProcessControlBlock> pcbList) {
         int pid = 0;
 
-        for (var proc : procs) {
-            pcbList.add(new ProcessControlBlock(pid, new ArrayList<>(), proc.stateMachine.getStart()));
+        for (ILProctype proc : procs) {
+            if (pid > MAX_PID_INCLUSIVE) {
+                throw new OutOfLimitException("进程数量超过个数限制（" + MAX_PID_INCLUSIVE + " 个）");
+            }
+
+            pcbList.add(new ProcessControlBlock(
+                    proc.name, pid, proc.memory, proc.getStart(), proc.getEnd()));
             pid++;
         }
+
+        return pid;
     }
 
     private Optional<Tuple2<ProcessControlBlock, TransitionEdge>> findExecutable() {
@@ -86,7 +143,7 @@ public class JamelinKernel {
         Optional<Tuple2<ProcessControlBlock, TransitionEdge>> result = Optional.empty();
 
         for (ProcessControlBlock pcb : pcbList) {
-            for (TransitionEdge edge : pcb.getCurrState().getOutEdge()) {
+            for (TransitionEdge edge : pcb.getCurrState().outEdge) {
                 if (edge.getCondition().execute(this, pcb) == 0) {
                     // 如果该 edge 不可执行
                     continue;

@@ -7,15 +7,21 @@ import java.util.List;
 
 public class ProcessControlBlock {
 
+    public final String name;
     public final ArrayList<Integer> memorySlots;
     private int pid;
     private StateNode currState;
+    public final StateNode end;
 
-    public ProcessControlBlock(int pid, List<Integer> memoryTemplate, StateNode initialState) {
+    public ProcessControlBlock(
+            String name, int pid, List<Integer> memoryTemplate,
+            StateNode initialState, StateNode end) {
+        this.name = name;
         this.pid = pid;
         this.memorySlots = new ArrayList<>(memoryTemplate);
 
         this.currState = initialState;
+        this.end = end;
     }
 
     public StateNode getCurrState() {

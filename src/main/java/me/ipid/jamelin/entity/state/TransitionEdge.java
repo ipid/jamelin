@@ -8,15 +8,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TransitionEdge implements Comparable<TransitionEdge> {
+    public static final int DUMMY_PRIORITY = 0;
+
     private int priority;
     private List<ILStatement> action;
     private ILExpr condition;
     private StateNode to;
 
-    public TransitionEdge(int priority, StateNode to) {
-        this.priority = priority;
+    public TransitionEdge(StateNode to) {
+        this(to, new ILConstExpr(1));
+    }
+
+    public TransitionEdge(StateNode to, ILExpr cond) {
+        this.priority = DUMMY_PRIORITY;
         this.action = new ArrayList<>();
-        this.condition = new ILConstExpr(1);
+        this.condition = cond;
         this.to = to;
     }
 
