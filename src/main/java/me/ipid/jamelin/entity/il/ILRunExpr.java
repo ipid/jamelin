@@ -14,4 +14,9 @@ public class ILRunExpr implements ILExpr {
     public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
         return kernel.createProcess(serialNum);
     }
+
+    @Override
+    public boolean checkCond(JamelinKernel kernel, ProcessControlBlock procInfo) {
+        return true;
+    }
 }

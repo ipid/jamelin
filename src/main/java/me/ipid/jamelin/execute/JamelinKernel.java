@@ -8,10 +8,12 @@ import me.ipid.jamelin.entity.state.TransitionEdge;
 import me.ipid.jamelin.exception.CompileExceptions.OutOfLimitException;
 import me.ipid.util.tupling.Tuple2;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JamelinKernel {
 
@@ -34,7 +36,7 @@ public class JamelinKernel {
 
         this.unusedPid = new LinkedList<>();
         for (int i = lastUnusedPid; i <= MAX_PID_INCLUSIVE; i++) {
-            unusedPid.push(i);
+            unusedPid.addLast(i);
         }
     }
 
@@ -46,7 +48,7 @@ public class JamelinKernel {
             throw new OutOfLimitException("pid 已经用尽，无法创建新进程");
         }
 
-        int pid = unusedPid.pop();
+        int pid = unusedPid.removeFirst();
         ILProctype proc = info.procs.get(procSerialNum);
         nextTickNewPcbs.add(new ProcessControlBlock(
                 proc.name, pid, proc.memory, proc.getStart(), proc.getEnd()));
@@ -66,6 +68,9 @@ public class JamelinKernel {
         // 调用初始化语句
         runInitStatements();
 
+        // 输出当前 PCB 中的进程
+        printProcessList();
+
         while (true) {
             boolean res = runOnce();
             if (!res) {
@@ -74,6 +79,12 @@ public class JamelinKernel {
         }
 
         log.debug("所有语句执行完毕");
+    }
+
+    private void printProcessList() {
+        log.debug("当前正在运行的进程：" + pcbList.stream()
+                .map(x -> "<" + x.name + ">")
+                .collect(Collectors.joining(", ")));
     }
 
     /**
@@ -89,11 +100,15 @@ public class JamelinKernel {
         }
 
         Tuple2<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
-        log.debug("执行来自 <" + next.a.name + "> 进程的 " + next.b.getAction().size() + " 条语句");
 
+        // 执行转移边上的动作
         for (ILStatement statement : next.b.getAction()) {
             statement.execute(this, next.a);
         }
+        // 转移边上的条件表达式可能有副作用，也需要执行
+        next.b.getCondition().execute(this, next.a);
+
+        // 改变当前进程的状态
         next.a.setCurrState(next.b.getTo());
 
         if (next.a.getCurrState() == next.a.end) {
@@ -103,8 +118,15 @@ public class JamelinKernel {
         }
 
         // 如果刚刚调用了 run 语句，则将 nextTickNewPcbs 中的内容加入 pcbList
-        pcbList.addAll(nextTickNewPcbs);
-        nextTickNewPcbs.clear();
+        if (!nextTickNewPcbs.isEmpty()) {
+            for (ProcessControlBlock pcb: nextTickNewPcbs) {
+                pcbList.add(pcb);
+                log.debug("启动 <" + pcb.name + "> 进程");
+            }
+            nextTickNewPcbs.clear();
+
+            printProcessList();
+        }
 
         return true;
     }
@@ -144,8 +166,9 @@ public class JamelinKernel {
 
         for (ProcessControlBlock pcb : pcbList) {
             for (TransitionEdge edge : pcb.getCurrState().outEdge) {
-                if (edge.getCondition().execute(this, pcb) == 0) {
-                    // 如果该 edge 不可执行
+                // 转移边上的条件可能有副作用，因此只调用 checkCond 方法
+                if (!edge.getCondition().checkCond(this, pcb)) {
+                    // 如果该 edge 的条件是 false，即不可执行
                     continue;
                 }
 
