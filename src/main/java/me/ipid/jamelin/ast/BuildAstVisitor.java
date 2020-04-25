@@ -76,6 +76,9 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
             }
         }
 
+        if (typeTuple.size() <= 0) {
+            throw new SyntaxException("信道不能一个类型也没有");
+        }
         return new AstChanInit(bufLen, typeTuple);
     }
 

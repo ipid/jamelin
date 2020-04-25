@@ -85,13 +85,7 @@ public class ExprConverter {
     private static SATypedExpr buildVarRefExpr(CompileTimeInfo cInfo, AstVarRefExpr vRef) {
         SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, vRef.vRef);
 
-        // 目前 Promela 语言仅支持将数字作为表达式，不支持 struct 赋值给 struct 这种骚操作
-        // 因此，如果表达式是 struct 类型的，那肯定搞错了
-        if (!(slot.type instanceof SAPrimitiveType)) {
-            throw new SyntaxException("试图使用 " + slot.type.getName() + " 类型的表达式，但 Promela 只允许整数类型的表达式");
-        }
-
-        return wrapInt(new ILGetDynMemExpr(
+        return new SATypedExpr(slot.type, new ILGetDynMemExpr(
                 slot.global,
                 slot.combineOffset()
         ));

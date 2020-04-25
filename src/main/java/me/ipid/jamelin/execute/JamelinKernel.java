@@ -115,6 +115,7 @@ public class JamelinKernel {
             // 进程运行结束，清理 PCB
             log.debug("<" + next.a.name + "> 进程运行结束");
             pcbList.remove(next.a);
+            unusedPid.addLast(next.a.getPid());
         }
 
         // 如果刚刚调用了 run 语句，则将 nextTickNewPcbs 中的内容加入 pcbList
