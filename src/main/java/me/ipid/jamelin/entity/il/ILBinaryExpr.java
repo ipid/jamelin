@@ -16,8 +16,9 @@ public class ILBinaryExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int l = left.execute(kernel, procInfo), r = right.execute(kernel, procInfo);
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+        int l = left.execute(kernel, procInfo, noSideEffect);
+        int r = right.execute(kernel, procInfo, noSideEffect);
 
         switch (op) {
             case ADD:

@@ -1,7 +1,9 @@
 package me.ipid.jamelin.entity.sa;
 
 import lombok.Getter;
+import me.ipid.jamelin.util.Slot;
 
+import java.util.List;
 import java.util.Objects;
 
 public class SAArrayType implements SAPromelaType {
@@ -45,5 +47,12 @@ public class SAArrayType implements SAPromelaType {
         }
         var other = (SAArrayType) obj;
         return type.equals(other.type) && arrLen == other.arrLen;
+    }
+
+    @Override
+    public void fillSlots(List<? super Slot> slots) {
+        for (int i = 0; i < arrLen; i++) {
+            type.fillSlots(slots);
+        }
     }
 }

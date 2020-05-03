@@ -7,6 +7,7 @@ import me.ipid.jamelin.constant.PromelaLanguage.UnaryOp;
 import me.ipid.jamelin.entity.CompileTimeInfo;
 import me.ipid.jamelin.entity.il.*;
 import me.ipid.jamelin.entity.sa.SAPrimitiveType;
+import me.ipid.jamelin.entity.sa.SAPromelaType;
 import me.ipid.jamelin.entity.sa.SATypeFactory.PrimitiveTypesLib;
 import me.ipid.jamelin.entity.sa.SATypedExpr;
 import me.ipid.jamelin.entity.sa.SATypedSlot;
@@ -20,6 +21,12 @@ import java.util.Optional;
 
 public class ExprConverter {
 
+    /**
+     * 构建 IL 表达式，并获取其类型。
+     * 请注意和 buildVarRef 的区别：此处获取的原始类型都会被提升为 int，不加以任何区分。
+     *
+     * @return (表达式类型, IL 表达式)
+     */
     public static SATypedExpr buildExpr(@NonNull CompileTimeInfo cInfo, @NonNull AstExpr astExpr) {
         LateInit<SATypedExpr> result = new LateInit<>();
 
@@ -37,11 +44,24 @@ public class ExprConverter {
             result.set(buildTernaryExpr(cInfo, x));
         }).when(AstRunExpr.class, x -> {
             result.set(buildRunExpr(cInfo, x));
+        }).when(AstChanPollExpr.class, x -> {
+            result.set(wrapInt(ChanConverter.buildPollExpr(cInfo, x)));
+        }).when(AstChanStatusExpr.class, x -> {
+            result.set(wrapInt(ChanConverter.buildStatusExpr(cInfo, x)));
+        }).when(AstLenExpr.class, x -> {
+            result.set(wrapInt(ChanConverter.buildLenExpr(cInfo, x)));
+        }).when(AstPredefVarExpr.class, x -> {
+            result.set(wrapInt(new ILPredefExpr(x.predef)));
         }).other(x -> {
             throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName() + " 表达式");
         });
 
-        return result.get();
+        // 将原始类型提升为 int 类型
+        SAPromelaType type = result.get().type;
+        if (type instanceof SAPrimitiveType) {
+            type = PrimitiveTypesLib.int_t;
+        }
+        return new SATypedExpr(type, result.get().expr);
     }
 
     private static SATypedExpr buildRunExpr(CompileTimeInfo cInfo, AstRunExpr x) {
@@ -84,8 +104,11 @@ public class ExprConverter {
 
     private static SATypedExpr buildVarRefExpr(CompileTimeInfo cInfo, AstVarRefExpr vRef) {
         SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, vRef.vRef);
+        if (!(slot.type instanceof SAPrimitiveType)) {
+            throw new SyntaxException("不允许将非原始类型 " + slot.type.getName() + " 当作表达式");
+        }
 
-        return new SATypedExpr(slot.type, new ILGetDynMemExpr(
+        return wrapInt(new ILGetDynMemExpr(
                 slot.global,
                 slot.combineOffset()
         ));

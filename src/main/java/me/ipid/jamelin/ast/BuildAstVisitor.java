@@ -68,6 +68,12 @@ public class BuildAstVisitor extends PromelaAntlrBaseVisitor<AstNode> {
 
     private AstChanInit buildChanInit(ChanInitContext ctx) {
         int bufLen = ConstExprCalculator.calc(ctx.constExpr());
+        if (bufLen < 0) {
+            throw new SyntaxException("信道缓冲区长度不能小于 0");
+        } else if (bufLen == 0) {
+            throw new NotSupportedException("暂不支持创建 rendezvous 信道；暂不支持创建缓冲区为 0 的信道");
+        }
+
         List<String> typeTuple = new NonNullArrayList<>();
 
         if (ctx.typeName() != null) {

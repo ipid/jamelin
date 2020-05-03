@@ -169,11 +169,31 @@ public class ModuleConverter {
             result.set(handleIfDoStatement(cInfo, x, start, end));
         }).when(AstBreakStatement.class, x -> {
             result.set(handleBreakStatement(cInfo, x, start, end));
+        }).when(AstSendStatement.class, x -> {
+            result.set(handleSendStatement(cInfo, x, start, end));
+        }).when(AstRecvStatement.class, x -> {
+            result.set(handleRecvStatement(cInfo, x, start, end));
         }).other(x -> {
             throw new NotSupportedException("暂不支持 " + x.getClass().getSimpleName() + " 语句类型");
         });
 
         return result.get();
+    }
+
+    private static BuildStatementResult handleRecvStatement(
+            CompileTimeInfo cInfo, AstRecvStatement recv, StateNode start, StateNode end
+    ) {
+        var stmtCond = ChanConverter.buildRecvStatement(cInfo, recv);
+        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
+        return new BuildStatementResult(false);
+    }
+
+    private static BuildStatementResult handleSendStatement(
+            CompileTimeInfo cInfo, AstSendStatement send, StateNode start, StateNode end
+    ) {
+        var stmtCond = ChanConverter.buildSendStatement(cInfo, send);
+        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
+        return new BuildStatementResult(false);
     }
 
     private static BuildStatementResult handleBreakStatement(
@@ -269,9 +289,6 @@ public class ModuleConverter {
         return new BuildStatementResult(false);
     }
 
-    /**
-     * 目前这个类只是个占位符，根本用不着；本类存在的意义是方便后期修改
-     */
     public static final class BuildStatementResult {
         // 当前语句块是否要被 break 掉
         public final boolean breaked;

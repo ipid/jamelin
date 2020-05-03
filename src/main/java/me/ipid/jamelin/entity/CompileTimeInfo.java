@@ -7,8 +7,6 @@ import me.ipid.jamelin.entity.state.StateNode;
 
 import java.util.ArrayDeque;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
 
 public class CompileTimeInfo {
     public final SASymbolTable table;

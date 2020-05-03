@@ -1,6 +1,7 @@
 package me.ipid.jamelin.entity.sa;
 
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
+import me.ipid.jamelin.util.Slot;
 import me.ipid.util.tupling.Tuple2;
 
 import java.util.*;
@@ -61,6 +62,17 @@ public final class SASymbolTable {
         var newTable = new LinkedHashMap<String, SASymbolTableItem>();
         symbolTables.add(newTable);
         historyLocalTables.add(newTable);
+    }
+
+    /**
+     * 获取当前的符号表深度。
+     * 如，在全局状态下为 0，进入 Proctype body 之后为 1。
+     *
+     * @return 语句块深度
+     */
+    public int getDepth() {
+        // 全局时 size 为 1，所以要减 1
+        return symbolTables.size() - 1;
     }
 
     public void exitScope() {
@@ -155,6 +167,16 @@ public final class SASymbolTable {
         historyLocalTables.clear();
     }
 
+    public void fillSlots(List<? super Slot> slots) {
+        // 只有在 utype 里使用的符号表才能 fillSlots（免得把全局的符号表 fill 了）
+        assert !localizable;
+        var table = symbolTables.get(0);
+
+        for (SASymbolTableItem item : table.values()) {
+            item.type.fillSlots(slots);
+        }
+    }
+
     private void fillMemoryOfTable(List<? super Integer> list, LinkedHashMap<String, SASymbolTableItem> table) {
         for (SASymbolTableItem item : table.values()) {
             item.initVal.visit(singleInit -> {
@@ -173,11 +195,11 @@ public final class SASymbolTable {
                     var utype = (SAUtype) item.type;
                     utype.fields.fillGlobalMemory(list);
 
-                }else if (item.type instanceof SAArrayType &&
+                } else if (item.type instanceof SAArrayType &&
                         ((SAArrayType) item.type).type instanceof SAUtype) {
                     // Utype Array 也要递归填写初始值
                     var saArr = (SAArrayType) item.type;
-                    SAUtype arrOfUtype = (SAUtype)saArr.type;
+                    SAUtype arrOfUtype = (SAUtype) saArr.type;
 
                     for (int i = 0; i < saArr.arrLen; i++) {
                         arrOfUtype.fields.fillGlobalMemory(list);

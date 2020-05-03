@@ -8,7 +8,19 @@ import java.util.List;
 public class StateUtil {
     public static void link(StateNode start, StateNode end, List<ILStatement> statements) {
         var edge = new TransitionEdge(end);
-        edge.getAction().addAll(statements);
+        edge.action.addAll(statements);
+        start.outEdge.add(edge);
+    }
+
+    public static void linkSingle(StateNode start, StateNode end, ILStatement statement) {
+        var edge = new TransitionEdge(end);
+        edge.action.add(statement);
+        start.outEdge.add(edge);
+    }
+
+    public static void linkBlocking(StateNode start, StateNode end, ILStatement statement, ILExpr expr) {
+        var edge = new TransitionEdge(end, expr);
+        edge.action.add(statement);
         start.outEdge.add(edge);
     }
 

@@ -1,6 +1,9 @@
 package me.ipid.jamelin.entity.sa;
 
 import lombok.Getter;
+import me.ipid.jamelin.util.Slot;
+
+import java.util.List;
 
 public class SAUtype implements SAPromelaType {
     public final SASymbolTable fields;
@@ -39,5 +42,10 @@ public class SAUtype implements SAPromelaType {
         }
         var other = (SAUtype) obj;
         return typeId == other.typeId;
+    }
+
+    @Override
+    public void fillSlots(List<? super Slot> slots) {
+        fields.fillSlots(slots);
     }
 }

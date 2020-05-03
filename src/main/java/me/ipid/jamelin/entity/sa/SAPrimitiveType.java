@@ -1,7 +1,9 @@
 package me.ipid.jamelin.entity.sa;
 
 import lombok.Getter;
+import me.ipid.jamelin.util.Slot;
 
+import java.util.List;
 import java.util.Objects;
 
 public class SAPrimitiveType implements SAPromelaType {
@@ -49,5 +51,10 @@ public class SAPrimitiveType implements SAPromelaType {
 
         var other = (SAPrimitiveType) obj;
         return name.equals(other.name) && signed == other.signed && bitLen == other.bitLen;
+    }
+
+    @Override
+    public void fillSlots(List<? super Slot> slots) {
+        slots.add(new Slot(bitLen, signed));
     }
 }

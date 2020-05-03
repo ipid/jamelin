@@ -16,8 +16,8 @@ public class ILSetDynMemStatement implements ILStatement {
 
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int value = valueExpr.execute(kernel, procInfo),
-                offset = offsetExpr.execute(kernel, procInfo);
+        int value = valueExpr.execute(kernel, procInfo,false),
+                offset = offsetExpr.execute(kernel, procInfo,false);
 
         if (global) {
             kernel.setGlobalMemory(offset, value);

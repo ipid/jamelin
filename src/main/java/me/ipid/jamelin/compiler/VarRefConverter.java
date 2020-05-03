@@ -35,6 +35,16 @@ public class VarRefConverter {
         return result.get();
     }
 
+    public static ILRange buildRangeFromTypedSlot(
+            SATypedSlot slot
+    ) {
+        int size = slot.type.getSize();
+        ILExpr startIn = slot.combineOffset();
+        ILExpr endEx = new ILBinaryExpr(startIn, new ILConstExpr(size), BinaryOp.ADD);
+
+        return new ILRange(startIn, endEx, slot.global);
+    }
+
     private static SATypedSlot fromArrayAccess(
             CompileTimeInfo cInfo, AstArrayAccess arrAccess
     ) {

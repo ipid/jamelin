@@ -21,9 +21,9 @@ public class ILSetMemRangeStatement implements ILStatement {
 
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int start = startInclusiveExpr.execute(kernel, procInfo),
-                end = endExclusiveExpr.execute(kernel, procInfo),
-                setTo = setToExpr.execute(kernel, procInfo);
+        int start = startInclusiveExpr.execute(kernel, procInfo, false),
+                end = endExclusiveExpr.execute(kernel, procInfo, false),
+                setTo = setToExpr.execute(kernel, procInfo, false);
 
         for (int i = start; i < end; i++) {
             if (global) {

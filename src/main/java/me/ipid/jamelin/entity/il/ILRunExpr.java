@@ -11,12 +11,13 @@ public class ILRunExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        return kernel.createProcess(serialNum);
-    }
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+        // 当没有副作用时，表达式可能被当做转移边的条件
+        // 由于 run 语句在语义上不阻塞，因此总是返回 true
+        if (noSideEffect) {
+            return 1;
+        }
 
-    @Override
-    public boolean checkCond(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        return true;
+        return kernel.createProcess(serialNum);
     }
 }

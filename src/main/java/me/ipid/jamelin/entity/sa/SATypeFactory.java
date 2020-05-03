@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SATypeFactory {
+    // 大于此值的 type id 是有可能存在的，取决于上下文
     public static final int MAX_TYPE_ID = 1048576;
     private static SATypeFactory instance;
 

@@ -34,8 +34,8 @@ public class ILConvertExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int value = expr.execute(kernel, procInfo);
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+        int value = expr.execute(kernel, procInfo, noSideEffect);
 
         if (signed) {
             return NumberDowncaster.castSigned(bitLen, value);

@@ -5,8 +5,10 @@ import me.ipid.jamelin.ast.Ast.*;
 import me.ipid.jamelin.entity.CompileTimeInfo;
 import me.ipid.jamelin.entity.il.*;
 import me.ipid.jamelin.entity.sa.*;
+import me.ipid.jamelin.entity.sa.SATypeFactory.PrimitiveTypesLib;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
+import me.ipid.jamelin.util.Slot;
 import me.ipid.util.cell.Cell;
 import me.ipid.util.cell.Cells;
 import me.ipid.util.errors.Unreachable;
@@ -110,10 +112,16 @@ public final class DeclareConverter {
             return new ArrayList<>();
         }
 
-        // Primitive Type - Expr Init
-        if (astInit instanceof AstExprAsInit) {
-            ILExpr ilValue = ExprConverter.buildExpr(cInfo, ((AstExprAsInit) astInit).expr).requirePrimitive();
+        // Primitive Type / Primitive Array - Expr Init
+        if (astInit instanceof AstExprAsInit || astInit instanceof AstChanInit) {
+            ILExpr ilValue;
+            if (astInit instanceof AstExprAsInit) {
+                ilValue = ExprConverter.buildExpr(cInfo, ((AstExprAsInit) astInit).expr).requirePrimitive();
+            } else {
+                ilValue = buildChanInit(cInfo, (AstChanInit) astInit);
+            }
 
+            // Primitive Type - Expr Init
             if (saType instanceof SAPrimitiveType) {
                 cInfo.table.putVar(declare.varName, saType, SANoInit.instance());
                 var item = cInfo.table.getVar(declare.varName).get();
@@ -130,12 +138,40 @@ public final class DeclareConverter {
             }
         }
 
-        if (astInit instanceof AstChanInit) {
-            throw new NotSupportedException("暂不支持 chan 初始化");
-        }
-
         throw new SyntaxException("类型 " + saType.getName() +
                 " 不能用 " + astInit.getClass().getSimpleName() + " 来初始化");
+    }
+
+    private static ILCrateChanExpr buildChanInit(CompileTimeInfo cInfo, AstChanInit astInit) {
+        List<Slot> slots = new ArrayList<>();
+        List<Integer> typeIds = new ArrayList<>(), msgUnitLen = new ArrayList<>();
+
+        // 遍历类型，生成槽和 TypeID 数组
+        for (String typeName : astInit.elemTypeTuple) {
+            // 获取类型对象并验证
+            var saTypeRaw = cInfo.nItems.getItem(typeName);
+            if (saTypeRaw.isEmpty()) {
+                throw new SyntaxException("信道初始化时使用的 " + typeName + " 类型不存在");
+            } else if (!(saTypeRaw.get() instanceof SAPromelaType)) {
+                throw new SyntaxException("信道初始化时使用的 " + typeName + " 类型不是类型的名字");
+            }
+
+            SAPromelaType saType = (SAPromelaType) saTypeRaw.get();
+
+            // 获取其槽、typeid、长度
+            saType.fillSlots(slots);
+            msgUnitLen.add(saType.getSize());
+
+            // 如果该类型是原始类型，则此处用 int 的 typeid 来代替
+            if (saType instanceof SAPrimitiveType) {
+                typeIds.add(PrimitiveTypesLib.int_t.getTypeId());
+            } else {
+                typeIds.add(saType.getTypeId());
+            }
+        }
+
+        assert msgUnitLen.stream().mapToInt(x -> x).sum() == slots.size();
+        return new ILCrateChanExpr(astInit.bufLen, slots, typeIds, msgUnitLen);
     }
 
     private static List<ILStatement> buildFromUnsignedDeclare(CompileTimeInfo cInfo, AstUnsignedDeclare dec) {

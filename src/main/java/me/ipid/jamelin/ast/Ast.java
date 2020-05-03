@@ -247,7 +247,7 @@ public class Ast {
         public final @NonNull AstVarRef chan;
         public final @NonNull List<AstRecvArgItem> args;
 
-        public final boolean poll, fifo;
+        public final boolean peek, fifo;
     }
 
     public static final @RequiredArgsConstructor

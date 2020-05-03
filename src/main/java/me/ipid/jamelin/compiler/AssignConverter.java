@@ -28,7 +28,7 @@ public final class AssignConverter {
     private static List<ILStatement> buildAddition(CompileTimeInfo cInfo, AstAdditionStatement assign) {
         SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, assign.target);
         ILExpr valueAfterAdd = new ILBinaryExpr(
-                new ILGetDynMemExpr(slot.global, slot.combineOffset()),
+                slot.buildGetExpr(),
                 new ILConstExpr(assign.addBy),
                 BinaryOp.ADD
         );

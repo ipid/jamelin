@@ -13,8 +13,8 @@ public class ILGetDynMemExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int offset = memOffset.execute(kernel, procInfo);
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+        int offset = memOffset.execute(kernel, procInfo, noSideEffect);
 
         if (global) {
             return kernel.getGlobalMemory(offset);

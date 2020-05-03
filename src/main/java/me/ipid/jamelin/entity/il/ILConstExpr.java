@@ -12,8 +12,7 @@ public class ILConstExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         return num;
     }
-
 }

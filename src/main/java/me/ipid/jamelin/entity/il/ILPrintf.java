@@ -19,7 +19,7 @@ public class ILPrintf implements ILStatement {
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
         System.out.printf(template, paramExprList
                 .stream()
-                .map(x -> x.execute(kernel, procInfo))
+                .map(x -> x.execute(kernel, procInfo, false))
                 .toArray());
     }
 }

@@ -10,10 +10,10 @@ import java.util.List;
 public class TransitionEdge implements Comparable<TransitionEdge> {
     public static final int DUMMY_PRIORITY = 0;
 
-    private int priority;
-    private List<ILStatement> action;
-    private ILExpr condition;
-    private StateNode to;
+    public final int priority;
+    public final List<ILStatement> action;
+    public final ILExpr condition;
+    public final StateNode to;
 
     public TransitionEdge(StateNode to) {
         this(to, new ILConstExpr(1));
@@ -24,42 +24,6 @@ public class TransitionEdge implements Comparable<TransitionEdge> {
         this.action = new ArrayList<>();
         this.condition = cond;
         this.to = to;
-    }
-
-    public List<ILStatement> getAction() {
-        return action;
-    }
-
-    public TransitionEdge setAction(List<ILStatement> action) {
-        this.action = action;
-        return this;
-    }
-
-    public ILExpr getCondition() {
-        return condition;
-    }
-
-    public TransitionEdge setCondition(ILExpr condition) {
-        this.condition = condition;
-        return this;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public TransitionEdge setPriority(int priority) {
-        this.priority = priority;
-        return this;
-    }
-
-    public StateNode getTo() {
-        return to;
-    }
-
-    public TransitionEdge setTo(StateNode to) {
-        this.to = to;
-        return this;
     }
 
     @Override

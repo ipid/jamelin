@@ -15,8 +15,8 @@ public class ILUnaryExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        int num = target.execute(kernel, procInfo);
+    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+        int num = target.execute(kernel, procInfo, noSideEffect);
 
         switch (op) {
             case BIT_NOT:

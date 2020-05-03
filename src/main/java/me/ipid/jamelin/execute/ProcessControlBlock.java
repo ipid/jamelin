@@ -12,6 +12,7 @@ public class ProcessControlBlock {
     private int pid;
     private StateNode currState;
     public final StateNode end;
+    private boolean currElse;
 
     public ProcessControlBlock(
             String name, int pid, List<Integer> memoryTemplate,
@@ -39,6 +40,15 @@ public class ProcessControlBlock {
 
     public ProcessControlBlock setPid(int pid) {
         this.pid = pid;
+        return this;
+    }
+
+    public boolean isElse() {
+        return currElse;
+    }
+
+    public ProcessControlBlock setElse(boolean currElse) {
+        this.currElse = currElse;
         return this;
     }
 

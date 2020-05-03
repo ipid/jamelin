@@ -15,7 +15,7 @@ public class ILAssertStatement implements ILStatement {
 
     @Override
     public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
-        if (shouldTrue.execute(kernel, procInfo) == 0) {
+        if (shouldTrue.execute(kernel, procInfo, false) == 0) {
             throw new JamelinRuntimeException(errMsg);
         }
     }
