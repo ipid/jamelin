@@ -86,6 +86,8 @@ public class ModuleConverter {
             CompileTimeInfo cInfo,
             AstProctype astProc
     ) {
+        cInfo.checkNameExist(astProc.name);
+
         if (astProc.enabler.isPresent()) {
             throw new NotSupportedException("目前暂不支持进程的 enabler");
         } else if (astProc.args.size() > 0) {

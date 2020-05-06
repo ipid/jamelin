@@ -28,9 +28,7 @@ public final class DeclareConverter {
 
     public static void addUtype(CompileTimeInfo cInfo, AstUtype astUtype) {
         // 检查名字是否冲突
-        if (cInfo.nItems.getItem(astUtype.newTypeName).isPresent()) {
-            throw new SyntaxException("定义新类型错误：名称 " + astUtype.newTypeName + " 冲突");
-        }
+        cInfo.checkNameExist(astUtype.newTypeName);
 
         // 创建 utype 对象
         SAUtype saUtype = new SAUtype(astUtype.newTypeName, SATypeFactory.allocTypeId());
@@ -92,6 +90,9 @@ public final class DeclareConverter {
         if (declare.show || declare.local || declare.hidden) {
             throw new NotSupportedException("这编译器菜得很，不支持 show、local、hidden 这些高端特性");
         }
+
+        // 检查是否重名
+        cInfo.checkNameExist(declare.varName);
 
         // 提取类型，插入符号表
         SAPromelaType saType = extractType(cInfo, declare);
@@ -175,6 +176,9 @@ public final class DeclareConverter {
     }
 
     private static List<ILStatement> buildFromUnsignedDeclare(CompileTimeInfo cInfo, AstUnsignedDeclare dec) {
+        // 检查是否重名
+        cInfo.checkNameExist(dec.varName);
+
         // 放入符号表
         var type = extractUnsigned(dec);
         cInfo.table.putVar(dec.varName, type, SANoInit.instance());

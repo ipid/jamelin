@@ -3,6 +3,7 @@ package me.ipid.jamelin.util;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +33,21 @@ public class AntlrErrorListener extends BaseErrorListener {
             String msg,
             RecognitionException e
     ) {
-        errorList.add(String.format(
-                "语法错误：第 %d 行，第 %d 字符：此处的「%s」输入非法",
-                line, charPositionInLine, e.getOffendingToken().getText()
-        ));
+        var builder = new StringBuilder();
+        builder.append(String.format("语法错误：第 %d 行，第 %d 字符", line, charPositionInLine));
+        if (e != null) {
+            String invalid = "";
+            Token token = e.getOffendingToken();
+            if (token != null) {
+                invalid = token.getText();
+            }
+
+            if (!invalid.equals("")) {
+                builder.append(String.format("：此处的「%s」输入非法", invalid));
+            }
+        }
+
+        errorList.add(builder.toString());
     }
 
 }
