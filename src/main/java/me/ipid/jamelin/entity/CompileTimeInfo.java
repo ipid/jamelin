@@ -20,16 +20,16 @@ public class CompileTimeInfo {
         this.loopExit = new ArrayDeque<>();
     }
 
+    public void checkNameExist(String name) {
+        if (nameExist(name)) {
+            throw new SyntaxException("名为 " + name + " 的符号已存在");
+        }
+    }
+
     public boolean nameExist(String name) {
         if (table.getVar(name).isPresent()) {
             return true;
         }
         return nItems.getItem(name).isPresent();
-    }
-
-    public void checkNameExist(String name) {
-        if (nameExist(name)) {
-            throw new SyntaxException("名为 " + name + " 的符号已存在");
-        }
     }
 }

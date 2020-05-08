@@ -53,7 +53,7 @@ public final class AssignConverter {
     private static List<ILStatement> genAssignStatements(SATypedSlot slot, ILExpr value) {
         checkPrimitiveSlot(slot);
         var result = new ArrayList<ILStatement>();
-        result.add(new ILSetDynMemStatement(slot.global, slot.combineOffset(), value));
+        result.add(new ILSetMemStatement(slot.global, slot.combineOffset(), value));
         return result;
     }
 }

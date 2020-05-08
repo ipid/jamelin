@@ -19,6 +19,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChanConverter {
+    public static ILChanLenExpr buildLenExpr(
+            CompileTimeInfo cInfo, AstLenExpr x
+    ) {
+        ILExpr chanId = buildChanId(cInfo, x.target);
+        return new ILChanLenExpr(chanId);
+    }
+
+    public static ILChanPollExpr buildPollExpr(
+            CompileTimeInfo cInfo, AstChanPollExpr x
+    ) {
+        ILExpr chanId = buildChanId(cInfo, x.chan);
+
+        List<Integer> typeIds = new ArrayList<>();
+        List<ILRecvArgItem> recvArgs = new ArrayList<>();
+        buildRecvArgs(cInfo, x.args, typeIds, recvArgs);
+
+        return new ILChanPollExpr(recvArgs, chanId, typeIds);
+    }
+
     /**
      * 构建接收语句（及其对应的条件）
      *
@@ -41,54 +60,6 @@ public class ChanConverter {
                 new ILRecvStatement(recvArgs, chanId, typeIds, x.peek),
                 new ILChanPollExpr(recvArgs, chanId, typeIds)
         );
-    }
-
-    public static ILChanPollExpr buildPollExpr(
-            CompileTimeInfo cInfo, AstChanPollExpr x
-    ) {
-        ILExpr chanId = buildChanId(cInfo, x.chan);
-
-        List<Integer> typeIds = new ArrayList<>();
-        List<ILRecvArgItem> recvArgs = new ArrayList<>();
-        buildRecvArgs(cInfo, x.args, typeIds, recvArgs);
-
-        return new ILChanPollExpr(recvArgs, chanId, typeIds);
-    }
-
-    public static ILChanStatusExpr buildStatusExpr(
-            CompileTimeInfo cInfo, AstChanStatusExpr x
-    ) {
-        ILExpr chanId = buildChanId(cInfo, x.chan);
-        return new ILChanStatusExpr(chanId, x.op);
-    }
-
-    public static ILChanLenExpr buildLenExpr(
-            CompileTimeInfo cInfo, AstLenExpr x
-    ) {
-        ILExpr chanId = buildChanId(cInfo, x.target);
-        return new ILChanLenExpr(chanId);
-    }
-
-    private static void buildRecvArgs(
-            CompileTimeInfo cInfo, List<AstRecvArgItem> astArgs, List<Integer> typeIds, List<ILRecvArgItem> ilArgs
-    ) {
-        // 遍历每一个 AstRecvArgItem，根据其类型分发到子函数中处理
-        for (AstRecvArgItem astArg : astArgs) {
-            if (astArg instanceof AstVarRefRecvArg) {
-                handleAstVarRefRecvArg(cInfo, (AstVarRefRecvArg) astArg, typeIds, ilArgs);
-            } else if (astArg instanceof AstEvalExprRecvArg) {
-                handleAstEvalRecvArg(cInfo, (AstEvalExprRecvArg) astArg, typeIds, ilArgs);
-            } else if (astArg instanceof AstConstRecvArg) {
-                typeIds.add(PrimitiveTypesLib.int_t.getTypeId());
-                ilArgs.add(new ILConstRecvArg(((AstConstRecvArg) astArg).num));
-            } else if (astArg instanceof AstWriteOnlyRecvArg) {
-                // 此处用「不可能的 type id」表示「任意类型」
-                typeIds.add(SATypeFactory.MAX_TYPE_ID + 1);
-                ilArgs.add(ILWriteOnlyRecvArg.INSTANCE);
-            } else {
-                throw new Unreachable();
-            }
-        }
     }
 
     public static Tuple2<ILSendStatement, ILChanStatusExpr> buildSendStatement(
@@ -133,6 +104,13 @@ public class ChanConverter {
         );
     }
 
+    public static ILChanStatusExpr buildStatusExpr(
+            CompileTimeInfo cInfo, AstChanStatusExpr x
+    ) {
+        ILExpr chanId = buildChanId(cInfo, x.chan);
+        return new ILChanStatusExpr(chanId, x.op);
+    }
+
     private static ILExpr buildChanId(CompileTimeInfo cInfo, AstVarRef astChanId) {
         SATypedSlot chanIdSlot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, astChanId);
         if (!(chanIdSlot.type instanceof SAPrimitiveType)) {
@@ -140,6 +118,28 @@ public class ChanConverter {
         }
 
         return chanIdSlot.buildGetExpr();
+    }
+
+    private static void buildRecvArgs(
+            CompileTimeInfo cInfo, List<AstRecvArgItem> astArgs, List<Integer> typeIds, List<ILRecvArgItem> ilArgs
+    ) {
+        // 遍历每一个 AstRecvArgItem，根据其类型分发到子函数中处理
+        for (AstRecvArgItem astArg : astArgs) {
+            if (astArg instanceof AstVarRefRecvArg) {
+                handleAstVarRefRecvArg(cInfo, (AstVarRefRecvArg) astArg, typeIds, ilArgs);
+            } else if (astArg instanceof AstEvalExprRecvArg) {
+                handleAstEvalRecvArg(cInfo, (AstEvalExprRecvArg) astArg, typeIds, ilArgs);
+            } else if (astArg instanceof AstConstRecvArg) {
+                typeIds.add(PrimitiveTypesLib.int_t.getTypeId());
+                ilArgs.add(new ILConstRecvArg(((AstConstRecvArg) astArg).num));
+            } else if (astArg instanceof AstWriteOnlyRecvArg) {
+                // 此处用「不可能的 type id」表示「任意类型」
+                typeIds.add(SATypeFactory.MAX_TYPE_ID + 1);
+                ilArgs.add(ILWriteOnlyRecvArg.INSTANCE);
+            } else {
+                throw new Unreachable();
+            }
+        }
     }
 
     private static void handleAstEvalRecvArg(

@@ -26,7 +26,7 @@ public class ILPrimitiveRecvArg implements ILRecvArgItem {
     @Override
     public boolean receivable(
             JamelinKernel kernel, ProcessControlBlock pcb,
-                              int[] msg, int startIn, int endEx
+            int[] msg, int startIn, int endEx
     ) {
         checkMsgLen(startIn, endEx);
         return true;

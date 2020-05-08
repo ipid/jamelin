@@ -84,6 +84,10 @@ public class GlbInitValConverter {
         return new SAInitList(arr);
     }
 
+    private static int castNumToType(SAPrimitiveType pType, int rawNum) {
+        return NumberDowncaster.cast(pType.signed, pType.bitLen, rawNum);
+    }
+
     private static SAInitVal singleNumOnAnyType(SAPromelaType saType, int rawNum) {
         LateInit<SAInitVal> result = new LateInit<>();
 
@@ -91,7 +95,7 @@ public class GlbInitValConverter {
                 saType
         ).when(SAArrayType.class, saArr -> {
             // 只有原始类型的数组能够设置单表达式初值
-            int num = castNumToType((SAPrimitiveType)saArr.type, rawNum);
+            int num = castNumToType((SAPrimitiveType) saArr.type, rawNum);
 
             // 如果类型为数组，就将 num 重复 saArr 中的数组长度那么多遍
             result.set(new SAInitList(
@@ -105,9 +109,5 @@ public class GlbInitValConverter {
         });
 
         return result.get();
-    }
-
-    private static int castNumToType(SAPrimitiveType pType, int rawNum) {
-        return NumberDowncaster.cast(pType.signed, pType.bitLen, rawNum);
     }
 }

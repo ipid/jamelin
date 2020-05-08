@@ -12,14 +12,14 @@ public class StateUtil {
         start.outEdge.add(edge);
     }
 
-    public static void linkSingle(StateNode start, StateNode end, ILStatement statement) {
-        var edge = new TransitionEdge(end);
+    public static void linkBlocking(StateNode start, StateNode end, ILStatement statement, ILExpr expr) {
+        var edge = new TransitionEdge(end, expr);
         edge.action.add(statement);
         start.outEdge.add(edge);
     }
 
-    public static void linkBlocking(StateNode start, StateNode end, ILStatement statement, ILExpr expr) {
-        var edge = new TransitionEdge(end, expr);
+    public static void linkSingle(StateNode start, StateNode end, ILStatement statement) {
+        var edge = new TransitionEdge(end);
         edge.action.add(statement);
         start.outEdge.add(edge);
     }

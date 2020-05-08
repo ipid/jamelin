@@ -64,6 +64,13 @@ public class ExprConverter {
         return new SATypedExpr(type, result.get().expr);
     }
 
+    private static SATypedExpr buildBinaryExpr(CompileTimeInfo cInfo, AstBinaryExpr binary) {
+        BinaryOp op = Objects.requireNonNull(BinaryOp.fromText.get(binary.op));
+        ILExpr a = buildExpr(cInfo, binary.a).expr, b = buildExpr(cInfo, binary.b).expr;
+
+        return wrapInt(new ILBinaryExpr(a, b, op));
+    }
+
     private static SATypedExpr buildRunExpr(CompileTimeInfo cInfo, AstRunExpr x) {
         if (!x.args.isEmpty()) {
             throw new NotSupportedException("暂不支持带参数运行进程");
@@ -80,13 +87,6 @@ public class ExprConverter {
         }
 
         return wrapInt(new ILRunExpr(cInfo.nItems.getSerialNumOfProc(x.procName)));
-    }
-
-    private static SATypedExpr buildBinaryExpr(CompileTimeInfo cInfo, AstBinaryExpr binary) {
-        BinaryOp op = Objects.requireNonNull(BinaryOp.fromText.get(binary.op));
-        ILExpr a = buildExpr(cInfo, binary.a).expr, b = buildExpr(cInfo, binary.b).expr;
-
-        return wrapInt(new ILBinaryExpr(a, b, op));
     }
 
     private static SATypedExpr buildTernaryExpr(CompileTimeInfo cInfo, AstTernaryExpr x) {
@@ -108,7 +108,7 @@ public class ExprConverter {
             throw new SyntaxException("不允许将非原始类型 " + slot.type.getName() + " 当作表达式");
         }
 
-        return wrapInt(new ILGetDynMemExpr(
+        return wrapInt(new ILGetMemExpr(
                 slot.global,
                 slot.combineOffset()
         ));

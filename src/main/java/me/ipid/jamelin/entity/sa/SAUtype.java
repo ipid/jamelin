@@ -31,6 +31,11 @@ public class SAUtype implements SAPromelaType {
     }
 
     @Override
+    public void fillSlots(List<? super Slot> slots) {
+        fields.fillSlots(slots);
+    }
+
+    @Override
     public int hashCode() {
         return typeId;
     }
@@ -42,10 +47,5 @@ public class SAUtype implements SAPromelaType {
         }
         var other = (SAUtype) obj;
         return typeId == other.typeId;
-    }
-
-    @Override
-    public void fillSlots(List<? super Slot> slots) {
-        fields.fillSlots(slots);
     }
 }

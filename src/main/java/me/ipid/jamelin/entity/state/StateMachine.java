@@ -1,9 +1,5 @@
 package me.ipid.jamelin.entity.state;
 
-import me.ipid.jamelin.entity.il.ILStatement;
-
-import java.util.List;
-
 public class StateMachine {
     private StateNode start, end;
 

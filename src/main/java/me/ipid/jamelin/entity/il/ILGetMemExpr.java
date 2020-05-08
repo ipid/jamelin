@@ -3,11 +3,11 @@ package me.ipid.jamelin.entity.il;
 import me.ipid.jamelin.execute.JamelinKernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
-public class ILGetDynMemExpr implements ILExpr {
+public class ILGetMemExpr implements ILExpr {
     public final boolean global;
     public final ILExpr memOffset;
 
-    public ILGetDynMemExpr(boolean global, ILExpr memOffset) {
+    public ILGetMemExpr(boolean global, ILExpr memOffset) {
         this.global = global;
         this.memOffset = memOffset;
     }

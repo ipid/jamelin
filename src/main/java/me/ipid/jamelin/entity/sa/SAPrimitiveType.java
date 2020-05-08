@@ -39,6 +39,11 @@ public class SAPrimitiveType implements SAPromelaType {
     }
 
     @Override
+    public void fillSlots(List<? super Slot> slots) {
+        slots.add(new Slot(bitLen, signed));
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(name, signed, bitLen);
     }
@@ -51,10 +56,5 @@ public class SAPrimitiveType implements SAPromelaType {
 
         var other = (SAPrimitiveType) obj;
         return name.equals(other.name) && signed == other.signed && bitLen == other.bitLen;
-    }
-
-    @Override
-    public void fillSlots(List<? super Slot> slots) {
-        slots.add(new Slot(bitLen, signed));
     }
 }

@@ -114,11 +114,44 @@ public class ModuleConverter {
         return Tuple2.of(ilProc, astProc.active);
     }
 
+    private static BuildStatementResult handleAssertStatement(
+            CompileTimeInfo cInfo, AstAssertStatement assertStatement, StateNode start, StateNode end
+    ) {
+        StateUtil.link(start, end, Lists.newArrayList(
+                new ILAssertStatement(
+                        ExprConverter.buildExpr(cInfo, assertStatement.toBeTrue).requirePrimitive(),
+                        "断言条件不符合")
+                )
+        );
+
+        return new BuildStatementResult(false);
+    }
+
     private static BuildStatementResult handleAssignment(
             CompileTimeInfo cInfo, AstAssignment assign, StateNode start, StateNode end
     ) {
         StateUtil.link(start, end, AssignConverter.buildAssign(cInfo, assign));
         return new BuildStatementResult(false);
+    }
+
+    private static BuildStatementResult handleBlockableStatement(
+            CompileTimeInfo cInfo, AstBlockableStatement blockable, StateNode start, StateNode end
+    ) {
+        ILExpr cond = ExprConverter.buildExpr(cInfo, blockable.expr).requirePrimitive();
+        StateUtil.linkWithCond(start, end, cond);
+        return new BuildStatementResult(false);
+    }
+
+    private static BuildStatementResult handleBreakStatement(
+            CompileTimeInfo cInfo, AstBreakStatement breakStatement, StateNode start, StateNode end
+    ) {
+        if (cInfo.loopExit.isEmpty()) {
+            throw new SyntaxException("目前不在 do 循环中，无法使用 break 语句");
+        }
+        StateNode exit = cInfo.loopExit.peek();
+
+        StateUtil.link(start, exit, new ArrayList<>());
+        return new BuildStatementResult(true);
     }
 
     private static BuildStatementResult handleDeclareStatement(
@@ -134,6 +167,32 @@ public class ModuleConverter {
         return new BuildStatementResult(false);
     }
 
+    private static BuildStatementResult handleIfDoStatement(
+            CompileTimeInfo cInfo, AstIfDoStatement ifDoStatement, StateNode start, StateNode end
+    ) {
+        // 决定语句的结尾是哪个节点
+        // 如果是循环，就要让语句最后回到 start 节点
+        StateNode target;
+        if (ifDoStatement.isDo) {
+            // 记录当前循环的出口，供 break 语句使用
+            cInfo.loopExit.push(end);
+            target = start;
+        } else {
+            target = end;
+        }
+
+        for (List<AstStatement> choice : ifDoStatement.choices) {
+            handleStatementsBlock(cInfo, choice, start, target);
+        }
+
+        if (ifDoStatement.isDo) {
+            // 如果是循环，那就删掉循环出口
+            cInfo.loopExit.pop();
+        }
+
+        return new BuildStatementResult(false);
+    }
+
     private static BuildStatementResult handlePrintfStatement(
             CompileTimeInfo cInfo, AstPrintfStatement printf, StateNode start, StateNode end
     ) {
@@ -145,6 +204,22 @@ public class ModuleConverter {
         var ilPrintf = new ILPrintf(printf.template, exprList);
         StateUtil.link(start, end, Lists.newArrayList(ilPrintf));
 
+        return new BuildStatementResult(false);
+    }
+
+    private static BuildStatementResult handleRecvStatement(
+            CompileTimeInfo cInfo, AstRecvStatement recv, StateNode start, StateNode end
+    ) {
+        var stmtCond = ChanConverter.buildRecvStatement(cInfo, recv);
+        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
+        return new BuildStatementResult(false);
+    }
+
+    private static BuildStatementResult handleSendStatement(
+            CompileTimeInfo cInfo, AstSendStatement send, StateNode start, StateNode end
+    ) {
+        var stmtCond = ChanConverter.buildSendStatement(cInfo, send);
+        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
         return new BuildStatementResult(false);
     }
 
@@ -180,81 +255,6 @@ public class ModuleConverter {
         });
 
         return result.get();
-    }
-
-    private static BuildStatementResult handleRecvStatement(
-            CompileTimeInfo cInfo, AstRecvStatement recv, StateNode start, StateNode end
-    ) {
-        var stmtCond = ChanConverter.buildRecvStatement(cInfo, recv);
-        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
-        return new BuildStatementResult(false);
-    }
-
-    private static BuildStatementResult handleSendStatement(
-            CompileTimeInfo cInfo, AstSendStatement send, StateNode start, StateNode end
-    ) {
-        var stmtCond = ChanConverter.buildSendStatement(cInfo, send);
-        StateUtil.linkBlocking(start, end, stmtCond.a, stmtCond.b);
-        return new BuildStatementResult(false);
-    }
-
-    private static BuildStatementResult handleBreakStatement(
-            CompileTimeInfo cInfo, AstBreakStatement breakStatement, StateNode start, StateNode end
-    ) {
-        if (cInfo.loopExit.isEmpty()) {
-            throw new SyntaxException("目前不在 do 循环中，无法使用 break 语句");
-        }
-        StateNode exit = cInfo.loopExit.peek();
-
-        StateUtil.link(start, exit, new ArrayList<>());
-        return new BuildStatementResult(true);
-    }
-
-    private static BuildStatementResult handleAssertStatement(
-            CompileTimeInfo cInfo, AstAssertStatement assertStatement, StateNode start, StateNode end
-    ) {
-        StateUtil.link(start, end, Lists.newArrayList(
-                new ILAssertStatement(
-                        ExprConverter.buildExpr(cInfo, assertStatement.toBeTrue).requirePrimitive(),
-                        "断言条件不符合")
-                )
-        );
-
-        return new BuildStatementResult(false);
-    }
-
-    private static BuildStatementResult handleBlockableStatement(
-            CompileTimeInfo cInfo, AstBlockableStatement blockable, StateNode start, StateNode end
-    ) {
-        ILExpr cond = ExprConverter.buildExpr(cInfo, blockable.expr).requirePrimitive();
-        StateUtil.linkWithCond(start, end, cond);
-        return new BuildStatementResult(false);
-    }
-
-    private static BuildStatementResult handleIfDoStatement(
-            CompileTimeInfo cInfo, AstIfDoStatement ifDoStatement, StateNode start, StateNode end
-    ) {
-        // 决定语句的结尾是哪个节点
-        // 如果是循环，就要让语句最后回到 start 节点
-        StateNode target;
-        if (ifDoStatement.isDo) {
-            // 记录当前循环的出口，供 break 语句使用
-            cInfo.loopExit.push(end);
-            target = start;
-        } else {
-            target = end;
-        }
-
-        for (List<AstStatement> choice : ifDoStatement.choices) {
-            handleStatementsBlock(cInfo, choice, start, target);
-        }
-
-        if (ifDoStatement.isDo) {
-            // 如果是循环，那就删掉循环出口
-            cInfo.loopExit.pop();
-        }
-
-        return new BuildStatementResult(false);
     }
 
     private static BuildStatementResult handleStatementsBlock(

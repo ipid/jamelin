@@ -20,11 +20,11 @@ public final class ILProctype implements ILNamedItem {
         this.memory = new ArrayList<>();
     }
 
-    public StateNode getStart() {
-        return machine.getStart();
-    }
-
     public StateNode getEnd() {
         return machine.getEnd();
+    }
+
+    public StateNode getStart() {
+        return machine.getStart();
     }
 }

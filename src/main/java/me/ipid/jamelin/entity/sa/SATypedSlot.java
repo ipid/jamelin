@@ -6,7 +6,7 @@ import me.ipid.jamelin.constant.PromelaLanguage.BinaryOp;
 import me.ipid.jamelin.entity.il.ILBinaryExpr;
 import me.ipid.jamelin.entity.il.ILConstExpr;
 import me.ipid.jamelin.entity.il.ILExpr;
-import me.ipid.jamelin.entity.il.ILGetDynMemExpr;
+import me.ipid.jamelin.entity.il.ILGetMemExpr;
 
 public final @Data
 class SATypedSlot {
@@ -15,15 +15,15 @@ class SATypedSlot {
     public final int sOffset;
     public final @NonNull ILExpr dOffset;
 
-    public ILBinaryExpr combineOffset() {
-        return new ILBinaryExpr(dOffset, new ILConstExpr(sOffset), BinaryOp.ADD);
-    }
-
-    public ILGetDynMemExpr buildGetExpr() {
+    public ILGetMemExpr buildGetExpr() {
         if (!(type instanceof SAPrimitiveType)) {
             throw new Error("非原始类型；不能构建 get 表达式");
         }
 
-        return new ILGetDynMemExpr(global, combineOffset());
+        return new ILGetMemExpr(global, combineOffset());
+    }
+
+    public ILBinaryExpr combineOffset() {
+        return new ILBinaryExpr(dOffset, new ILConstExpr(sOffset), BinaryOp.ADD);
     }
 }

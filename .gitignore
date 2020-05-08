@@ -113,3 +113,6 @@ buildNumber.properties
 /generated-src/
 /run/
 /out/
+
+# Ignore UML Diagrams
+*.uml

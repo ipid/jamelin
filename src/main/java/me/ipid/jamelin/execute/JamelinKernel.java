@@ -49,6 +49,14 @@ public class JamelinKernel {
         this.timeout = false;
     }
 
+    public int getProcessNum() {
+        return pcbList.size();
+    }
+
+    public boolean isTimeout() {
+        return timeout;
+    }
+
     public int createChan(
             int bufLen, List<Slot> slots, List<Integer> typeIds, List<Integer> msgUnitLen, int msgSizeCache
     ) {
@@ -58,20 +66,6 @@ public class JamelinKernel {
 
         chans.add(new KnlChan(bufLen, slots, typeIds, msgUnitLen, msgSizeCache));
         return chans.size() - 1;
-    }
-
-    public KnlChan getChannel(int chanId) {
-        if (chanId <= 0) {
-            throw new JamelinRuntimeException("试图使用未初始化的信道");
-        }
-        if (chanId > MAX_CHAN_INCLUSIVE) {
-            throw new JamelinRuntimeException("试图获取超过信道数量限制的信道");
-        }
-        if (chanId >= chans.size()) {
-            throw new JamelinRuntimeException("试图获取尚未存在的信道");
-        }
-
-        return Objects.requireNonNull(chans.get(chanId));
     }
 
     /**
@@ -88,6 +82,20 @@ public class JamelinKernel {
                 proc.name, pid, proc.memory, proc.getStart(), proc.getEnd()));
 
         return pid;
+    }
+
+    public KnlChan getChannel(int chanId) {
+        if (chanId <= 0) {
+            throw new JamelinRuntimeException("试图使用未初始化的信道");
+        }
+        if (chanId > MAX_CHAN_INCLUSIVE) {
+            throw new JamelinRuntimeException("试图获取超过信道数量限制的信道");
+        }
+        if (chanId >= chans.size()) {
+            throw new JamelinRuntimeException("试图获取尚未存在的信道");
+        }
+
+        return Objects.requireNonNull(chans.get(chanId));
     }
 
     public int getGlobalMemory(int offset) {
@@ -117,67 +125,6 @@ public class JamelinKernel {
         } else {
             log.debug("所有语句执行完毕");
         }
-    }
-
-    private void printProcessList() {
-        log.debug("当前正在运行的进程：" + pcbList.stream()
-                .map(x -> "<" + x.name + ">")
-                .collect(Collectors.joining(", ")));
-    }
-
-    /**
-     * 执行一条语句
-     *
-     * @return 布尔值，True 表示本次执行了一次转移，False 表示本次找不到可执行的转移边
-     */
-    public boolean runOnce() {
-        var maybeNext = findExec();
-        if (maybeNext.isEmpty()) {
-            // 注意「找不到可执行的语句」不一定是死锁，有可能是全部执行完了
-            log.debug("找不到可执行的语句");
-            return false;
-        }
-
-        Tuple2<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
-
-        // 执行转移边上的动作
-        for (ILStatement statement : next.b.action) {
-            statement.execute(this, next.a);
-        }
-
-        // 转移边上的条件表达式可能有副作用，也需要执行
-        next.b.condition.execute(this, next.a, false);
-
-        // 改变当前进程的状态
-        next.a.setCurrState(next.b.to);
-
-        if (next.a.getCurrState() == next.a.end) {
-            // 进程运行结束，清理 PCB
-            log.debug("<" + next.a.name + "> 进程运行结束");
-            pcbList.remove(next.a);
-            unusedPid.addLast(next.a.getPid());
-        }
-
-        // 如果刚刚调用了 run 语句，则将 nextTickNewPcbs 中的内容加入 pcbList
-        if (!nextTickNewPcbs.isEmpty()) {
-            for (ProcessControlBlock pcb : nextTickNewPcbs) {
-                pcbList.add(pcb);
-                log.debug("启动 <" + pcb.name + "> 进程");
-            }
-            nextTickNewPcbs.clear();
-
-            printProcessList();
-        }
-
-        return true;
-    }
-
-    public boolean isTimeout() {
-        return timeout;
-    }
-
-    public int getProcessNum() {
-        return pcbList.size();
     }
 
     public void setGlobalMemory(int offset, int newValue) {
@@ -271,11 +218,64 @@ public class JamelinKernel {
         return reservoir.get(0);
     }
 
+    private void printProcessList() {
+        log.debug("当前正在运行的进程：" + pcbList.stream()
+                .map(x -> "<" + x.name + ">")
+                .collect(Collectors.joining(", ")));
+    }
+
     private void runInitStatements() {
         ProcessControlBlock pcb = new MockPCB();
 
         for (ILStatement statement : info.initStatements) {
             statement.execute(this, pcb);
         }
+    }
+
+    /**
+     * 执行一条语句
+     *
+     * @return 布尔值，True 表示本次执行了一次转移，False 表示本次找不到可执行的转移边
+     */
+    private boolean runOnce() {
+        var maybeNext = findExec();
+        if (maybeNext.isEmpty()) {
+            // 注意「找不到可执行的语句」不一定是死锁，有可能是全部执行完了
+            log.debug("找不到可执行的语句");
+            return false;
+        }
+
+        Tuple2<ProcessControlBlock, TransitionEdge> next = maybeNext.get();
+
+        // 执行转移边上的动作
+        for (ILStatement statement : next.b.action) {
+            statement.execute(this, next.a);
+        }
+
+        // 转移边上的条件表达式可能有副作用，也需要执行
+        next.b.condition.execute(this, next.a, false);
+
+        // 改变当前进程的状态
+        next.a.setCurrState(next.b.to);
+
+        if (next.a.getCurrState() == next.a.end) {
+            // 进程运行结束，清理 PCB
+            log.debug("<" + next.a.name + "> 进程运行结束");
+            pcbList.remove(next.a);
+            unusedPid.addLast(next.a.getPid());
+        }
+
+        // 如果刚刚调用了 run 语句，则将 nextTickNewPcbs 中的内容加入 pcbList
+        if (!nextTickNewPcbs.isEmpty()) {
+            for (ProcessControlBlock pcb : nextTickNewPcbs) {
+                pcbList.add(pcb);
+                log.debug("启动 <" + pcb.name + "> 进程");
+            }
+            nextTickNewPcbs.clear();
+
+            printProcessList();
+        }
+
+        return true;
     }
 }

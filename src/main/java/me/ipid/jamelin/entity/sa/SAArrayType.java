@@ -36,6 +36,13 @@ public class SAArrayType implements SAPromelaType {
     }
 
     @Override
+    public void fillSlots(List<? super Slot> slots) {
+        for (int i = 0; i < arrLen; i++) {
+            type.fillSlots(slots);
+        }
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(type, arrLen);
     }
@@ -47,12 +54,5 @@ public class SAArrayType implements SAPromelaType {
         }
         var other = (SAArrayType) obj;
         return type.equals(other.type) && arrLen == other.arrLen;
-    }
-
-    @Override
-    public void fillSlots(List<? super Slot> slots) {
-        for (int i = 0; i < arrLen; i++) {
-            type.fillSlots(slots);
-        }
     }
 }

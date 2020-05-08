@@ -33,6 +33,14 @@ public class KnlChan {
         this.msgs = new LinkedList<>();
     }
 
+    public boolean isEmpty() {
+        return msgs.size() <= 0;
+    }
+
+    public boolean isFull() {
+        return msgs.size() >= bufLen;
+    }
+
     /**
      * 检查传入的 type id 与自己的 type id 是否一致。
      * 规则：
@@ -45,25 +53,6 @@ public class KnlChan {
         if (!isTypeIdConsistent(others)) {
             throw new JamelinRuntimeException("信道消息类型与传入的类型不一致");
         }
-    }
-
-    private boolean isTypeIdConsistent(List<Integer> others) {
-        if (others.size() != typeIds.size()) {
-            return false;
-        }
-
-        for (int i = 0; i < typeIds.size(); i++) {
-            int curr = typeIds.get(i), other = others.get(i);
-
-            if (other > SATypeFactory.MAX_TYPE_ID) {
-                continue;
-            }
-            if (curr != other) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public int countMessage() {
@@ -93,19 +82,6 @@ public class KnlChan {
         }
 
         return true;
-    }
-
-    private int[] firstMsg() {
-        assert !msgs.isEmpty();
-        return msgs.peekFirst();
-    }
-
-    public boolean isFull() {
-        return msgs.size() >= bufLen;
-    }
-
-    public boolean isEmpty() {
-        return msgs.size() <= 0;
     }
 
     public void receiveMessage(
@@ -155,5 +131,29 @@ public class KnlChan {
 
         // 将消息添加到缓冲区内
         msgs.addLast(msg);
+    }
+
+    private int[] firstMsg() {
+        assert !msgs.isEmpty();
+        return msgs.peekFirst();
+    }
+
+    private boolean isTypeIdConsistent(List<Integer> others) {
+        if (others.size() != typeIds.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < typeIds.size(); i++) {
+            int curr = typeIds.get(i), other = others.get(i);
+
+            if (other > SATypeFactory.MAX_TYPE_ID) {
+                continue;
+            }
+            if (curr != other) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

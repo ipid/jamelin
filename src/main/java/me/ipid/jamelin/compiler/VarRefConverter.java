@@ -15,6 +15,16 @@ import me.ipid.util.visitor.SubclassVisitor;
 
 public class VarRefConverter {
 
+    public static ILRange buildRangeFromTypedSlot(
+            SATypedSlot slot
+    ) {
+        int size = slot.type.getSize();
+        ILExpr startIn = slot.combineOffset();
+        ILExpr endEx = new ILBinaryExpr(startIn, new ILConstExpr(size), BinaryOp.ADD);
+
+        return new ILRange(startIn, endEx, slot.global);
+    }
+
     public static SATypedSlot buildTypedSlotOfVarRef(
             CompileTimeInfo cInfo, AstVarRef vRef
     ) {
@@ -33,16 +43,6 @@ public class VarRefConverter {
         });
 
         return result.get();
-    }
-
-    public static ILRange buildRangeFromTypedSlot(
-            SATypedSlot slot
-    ) {
-        int size = slot.type.getSize();
-        ILExpr startIn = slot.combineOffset();
-        ILExpr endEx = new ILBinaryExpr(startIn, new ILConstExpr(size), BinaryOp.ADD);
-
-        return new ILRange(startIn, endEx, slot.global);
     }
 
     private static SATypedSlot fromArrayAccess(

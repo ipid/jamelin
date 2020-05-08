@@ -23,13 +23,13 @@ public class ILEvalRangeRecvArg implements ILRecvArgItem {
 
         if (ilRange.global) {
             for (int i = 0; i < range.b - range.a; i++) {
-                if (kernel.getGlobalMemory(range.a + i)!= msg[startIn + i]) {
+                if (kernel.getGlobalMemory(range.a + i) != msg[startIn + i]) {
                     return false;
                 }
             }
         } else {
             for (int i = 0; i < range.b - range.a; i++) {
-                if (pcb.getProcessMemory(range.a + i)!= msg[startIn + i]) {
+                if (pcb.getProcessMemory(range.a + i) != msg[startIn + i]) {
                     return false;
                 }
             }

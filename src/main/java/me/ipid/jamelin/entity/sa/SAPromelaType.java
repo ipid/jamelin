@@ -7,7 +7,9 @@ import java.util.List;
 
 public interface SAPromelaType extends ILNamedItem {
     int getSize();
+
     int getTypeId();
+
     boolean isPrimitiveArray();
 
     /**

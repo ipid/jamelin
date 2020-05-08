@@ -26,6 +26,17 @@ public class NamedItemContainer {
         return Optional.ofNullable(namedItems.get(name));
     }
 
+    /**
+     * 获取指定名字的 ILProctype 对象在 proctypes 数组中的顺序。
+     * 此顺序按理来说，和 RuntimeInfo 中的顺序是一致的。
+     *
+     * @param name 进程名
+     * @return 序列号
+     */
+    public int getSerialNumOfProc(String name) {
+        return proctypes.indexOf(name);
+    }
+
     public void putProctype(String name, ILProctype proc) {
         proctypes.put(name, proc);
         namedItems.put(name, proc);
@@ -34,15 +45,5 @@ public class NamedItemContainer {
     public void putType(String name, SAPromelaType type) {
         types.put(name, type);
         namedItems.put(name, type);
-    }
-
-    /**
-     * 获取指定名字的 ILProctype 对象在 proctypes 数组中的顺序。
-     * 此顺序按理来说，和 RuntimeInfo 中的顺序是一致的。
-     * @param name 进程名
-     * @return 序列号
-     */
-    public int getSerialNumOfProc(String name) {
-        return proctypes.indexOf(name);
     }
 }

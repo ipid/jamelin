@@ -29,6 +29,17 @@ public final class SASymbolTable {
         this.localizable = localizable;
     }
 
+    /**
+     * 获取当前的符号表深度。
+     * 如，在全局状态下为 0，进入 Proctype body 之后为 1。
+     *
+     * @return 语句块深度
+     */
+    public int getDepth() {
+        // 全局时 size 为 1，所以要减 1
+        return symbolTables.size() - 1;
+    }
+
     public int getGlobalLen() {
         return globalStartAddr;
     }
@@ -64,17 +75,6 @@ public final class SASymbolTable {
         historyLocalTables.add(newTable);
     }
 
-    /**
-     * 获取当前的符号表深度。
-     * 如，在全局状态下为 0，进入 Proctype body 之后为 1。
-     *
-     * @return 语句块深度
-     */
-    public int getDepth() {
-        // 全局时 size 为 1，所以要减 1
-        return symbolTables.size() - 1;
-    }
-
     public void exitScope() {
         // 试图退出全局作用域
         if (symbolTables.size() <= 1) {
@@ -99,6 +99,16 @@ public final class SASymbolTable {
 
         for (var table : historyLocalTables) {
             fillMemoryOfTable(list, table);
+        }
+    }
+
+    public void fillSlots(List<? super Slot> slots) {
+        // 只有在 utype 里使用的符号表才能 fillSlots（免得把全局的符号表 fill 了）
+        assert !localizable;
+        var table = symbolTables.get(0);
+
+        for (SASymbolTableItem item : table.values()) {
+            item.type.fillSlots(slots);
         }
     }
 
@@ -165,16 +175,6 @@ public final class SASymbolTable {
 
         localStartAddr = 0;
         historyLocalTables.clear();
-    }
-
-    public void fillSlots(List<? super Slot> slots) {
-        // 只有在 utype 里使用的符号表才能 fillSlots（免得把全局的符号表 fill 了）
-        assert !localizable;
-        var table = symbolTables.get(0);
-
-        for (SASymbolTableItem item : table.values()) {
-            item.type.fillSlots(slots);
-        }
     }
 
     private void fillMemoryOfTable(List<? super Integer> list, LinkedHashMap<String, SASymbolTableItem> table) {
