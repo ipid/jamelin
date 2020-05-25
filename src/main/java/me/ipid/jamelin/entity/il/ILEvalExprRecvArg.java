@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILEvalExprRecvArg implements ILRecvArgItem {
@@ -19,7 +19,7 @@ public class ILEvalExprRecvArg implements ILRecvArgItem {
     }
 
     @Override
-    public boolean receivable(JamelinKernel kernel, ProcessControlBlock pcb,
+    public boolean receivable(Kernel kernel, ProcessControlBlock pcb,
                               int[] msg, int startIn, int endEx) {
         checkMsgLength(startIn, endEx);
 
@@ -28,7 +28,7 @@ public class ILEvalExprRecvArg implements ILRecvArgItem {
     }
 
     @Override
-    public void receiveValue(JamelinKernel kernel, ProcessControlBlock pcb,
+    public void receiveValue(Kernel kernel, ProcessControlBlock pcb,
                              int[] msg, int startIn, int endEx) {
         // eval(...) 的接收参数，接收消息时无需任何操作
         checkMsgLength(startIn, endEx);

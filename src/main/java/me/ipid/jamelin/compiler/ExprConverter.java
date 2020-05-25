@@ -10,7 +10,7 @@ import me.ipid.jamelin.entity.sa.SAPrimitiveType;
 import me.ipid.jamelin.entity.sa.SAPromelaType;
 import me.ipid.jamelin.entity.sa.SATypeFactory.PrimitiveTypesLib;
 import me.ipid.jamelin.entity.sa.SATypedExpr;
-import me.ipid.jamelin.entity.sa.SATypedSlot;
+import me.ipid.jamelin.entity.sa.SATypedMemLoc;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 import me.ipid.util.lateinit.LateInit;
@@ -103,7 +103,7 @@ public class ExprConverter {
     }
 
     private static SATypedExpr buildVarRefExpr(CompileTimeInfo cInfo, AstVarRefExpr vRef) {
-        SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, vRef.vRef);
+        SATypedMemLoc slot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo, vRef.vRef);
         if (!(slot.type instanceof SAPrimitiveType)) {
             throw new SyntaxException("不允许将非原始类型 " + slot.type.getName() + " 当作表达式");
         }

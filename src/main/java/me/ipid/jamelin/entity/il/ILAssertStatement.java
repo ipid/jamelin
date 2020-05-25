@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILAssertStatement implements ILStatement {
@@ -14,7 +14,7 @@ public class ILAssertStatement implements ILStatement {
     }
 
     @Override
-    public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public void execute(Kernel kernel, ProcessControlBlock procInfo) {
         if (shouldTrue.execute(kernel, procInfo, false) == 0) {
             throw new JamelinRuntimeException(errMsg);
         }

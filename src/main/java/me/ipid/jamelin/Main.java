@@ -12,7 +12,7 @@ import me.ipid.jamelin.compiler.ModuleConverter;
 import me.ipid.jamelin.entity.RuntimeInfo;
 import me.ipid.jamelin.exception.CompileExceptions.CompileException;
 import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrLexer;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser;
 import me.ipid.jamelin.thirdparty.antlr.PromelaAntlrParser.SpecContext;
@@ -131,7 +131,7 @@ public class Main {
         }
 
         logger.debug("开始运行");
-        JamelinKernel kernel = new JamelinKernel(rInfo);
+        Kernel kernel = new Kernel(rInfo);
         try {
             kernel.run();
         } catch (JamelinRuntimeException e) {

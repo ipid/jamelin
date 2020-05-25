@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 import me.ipid.jamelin.util.Slot;
 
@@ -25,7 +25,7 @@ public class ILPrimitiveRecvArg implements ILRecvArgItem {
 
     @Override
     public boolean receivable(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             int[] msg, int startIn, int endEx
     ) {
         checkMsgLen(startIn, endEx);
@@ -34,7 +34,7 @@ public class ILPrimitiveRecvArg implements ILRecvArgItem {
 
     @Override
     public void receiveValue(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             int[] msg, int startIn, int endEx
     ) {
         checkMsgLen(startIn, endEx);

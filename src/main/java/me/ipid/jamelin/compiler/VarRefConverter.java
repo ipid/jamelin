@@ -15,8 +15,8 @@ import me.ipid.util.visitor.SubclassVisitor;
 
 public class VarRefConverter {
 
-    public static ILRange buildRangeFromTypedSlot(
-            SATypedSlot slot
+    public static ILRange buildRangeFromTypedMemLoc(
+            SATypedMemLoc slot
     ) {
         int size = slot.type.getSize();
         ILExpr startIn = slot.combineOffset();
@@ -25,10 +25,10 @@ public class VarRefConverter {
         return new ILRange(startIn, endEx, slot.global);
     }
 
-    public static SATypedSlot buildTypedSlotOfVarRef(
+    public static SATypedMemLoc buildTypedMemLocOfVarRef(
             CompileTimeInfo cInfo, AstVarRef vRef
     ) {
-        LateInit<SATypedSlot> result = new LateInit<>();
+        LateInit<SATypedMemLoc> result = new LateInit<>();
 
         SubclassVisitor.visit(
                 vRef
@@ -45,11 +45,11 @@ public class VarRefConverter {
         return result.get();
     }
 
-    private static SATypedSlot fromArrayAccess(
+    private static SATypedMemLoc fromArrayAccess(
             CompileTimeInfo cInfo, AstArrayAccess arrAccess
     ) {
         // 检查访问的是不是数组类型
-        SATypedSlot slot = buildTypedSlotOfVarRef(cInfo, arrAccess.target);
+        SATypedMemLoc slot = buildTypedMemLocOfVarRef(cInfo, arrAccess.target);
         if (!(slot.type instanceof SAArrayType)) {
             throw new SyntaxException(slot.type.getName() + " 不是数组类型，不能用 [] 的形式访问");
         }
@@ -84,14 +84,14 @@ public class VarRefConverter {
             newDOffset = new ILBinaryExpr(slot.dOffset, assertedDelta, BinaryOp.ADD);
         }
 
-        return new SATypedSlot(arrOfType, slot.global, newSOffset, newDOffset);
+        return new SATypedMemLoc(arrOfType, slot.global, newSOffset, newDOffset);
     }
 
-    private static SATypedSlot fromMemberAccess(
+    private static SATypedMemLoc fromMemberAccess(
             CompileTimeInfo cInfo, AstMemberAccess memberAccess
     ) {
         // 获取目标的 Typed Slot
-        SATypedSlot targetSlot = buildTypedSlotOfVarRef(cInfo, memberAccess.target);
+        SATypedMemLoc targetSlot = buildTypedMemLocOfVarRef(cInfo, memberAccess.target);
         if (!(targetSlot.type instanceof SAUtype)) {
             throw new SyntaxException("类型 " + targetSlot.type.getName() + " 不是结构体，不能访问其 " +
                     memberAccess.member + " 属性");
@@ -107,11 +107,11 @@ public class VarRefConverter {
         // 返回的 isGlobal
         SASymbolTableItem field = fieldRaw.get();
 
-        return new SATypedSlot(field.type, targetSlot.global,
+        return new SATypedMemLoc(field.type, targetSlot.global,
                 targetSlot.sOffset + field.startAddr, targetSlot.dOffset);
     }
 
-    private static SATypedSlot fromVarNameAccess(
+    private static SATypedMemLoc fromVarNameAccess(
             CompileTimeInfo cInfo, AstVarNameAccess vAccess
     ) {
         var vRaw = cInfo.table.getVar(vAccess.varName);
@@ -120,6 +120,6 @@ public class VarRefConverter {
         }
         var targetTuple = vRaw.get();
 
-        return new SATypedSlot(targetTuple.a.type, targetTuple.b, targetTuple.a.startAddr, new ILConstExpr(0));
+        return new SATypedMemLoc(targetTuple.a.type, targetTuple.b, targetTuple.a.startAddr, new ILConstExpr(0));
     }
 }

@@ -9,7 +9,7 @@ import me.ipid.jamelin.entity.il.ILExpr;
 import me.ipid.jamelin.entity.il.ILGetMemExpr;
 
 public final @Data
-class SATypedSlot {
+class SATypedMemLoc {
     public final @NonNull SAPromelaType type;
     public final boolean global;
     public final int sOffset;

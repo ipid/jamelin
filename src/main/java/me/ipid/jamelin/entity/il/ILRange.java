@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 import me.ipid.util.tupling.Tuple2;
 
@@ -14,7 +14,7 @@ public class ILRange {
         this.global = global;
     }
 
-    public Tuple2<Integer, Integer> execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public Tuple2<Integer, Integer> execute(Kernel kernel, ProcessControlBlock procInfo) {
         return Tuple2.of(
                 startIn.execute(kernel, procInfo, false),
                 endEx.execute(kernel, procInfo, false));

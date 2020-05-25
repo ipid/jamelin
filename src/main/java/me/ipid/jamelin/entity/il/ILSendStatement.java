@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.KnlChan;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
@@ -19,7 +19,7 @@ public class ILSendStatement implements ILStatement {
     }
 
     @Override
-    public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public void execute(Kernel kernel, ProcessControlBlock procInfo) {
         KnlChan chan = kernel.getChannel(chanId.execute(kernel, procInfo, false));
 
         chan.checkTypeIdConsistency(typeIds);

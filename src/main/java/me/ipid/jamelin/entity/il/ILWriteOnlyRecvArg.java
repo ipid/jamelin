@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILWriteOnlyRecvArg implements ILRecvArgItem {
@@ -8,7 +8,7 @@ public class ILWriteOnlyRecvArg implements ILRecvArgItem {
 
     @Override
     public boolean receivable(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             int[] msg, int startIn, int endEx
     ) {
         // 由于是只写参数，所以永远可写
@@ -16,7 +16,7 @@ public class ILWriteOnlyRecvArg implements ILRecvArgItem {
     }
 
     @Override
-    public void receiveValue(JamelinKernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
+    public void receiveValue(Kernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
         // 由于是只写参数，所以永远不需要做任何工作
     }
 }

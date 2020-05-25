@@ -7,7 +7,7 @@ import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 
 /**
  * 用来表示 IL 表达式的类型。
- * 与 SATypedSlot 不同之处在于，SATypedSlot 表示的是槽的位置，与获取该槽的 IL 表达式无关。
+ * 与 SATypedMemLoc 不同之处在于，SATypedMemLoc 表示的是槽的位置，与获取该槽的 IL 表达式无关。
  */
 public @Data
 class SATypedExpr {

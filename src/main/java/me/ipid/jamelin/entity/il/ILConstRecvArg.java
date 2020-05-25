@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.exception.RuntimeExceptions.JamelinRuntimeException;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILConstRecvArg implements ILRecvArgItem {
@@ -18,13 +18,13 @@ public class ILConstRecvArg implements ILRecvArgItem {
     }
 
     @Override
-    public boolean receivable(JamelinKernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
+    public boolean receivable(Kernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
         checkMsgLength(startIn, endEx);
         return msg[startIn] == num;
     }
 
     @Override
-    public void receiveValue(JamelinKernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
+    public void receiveValue(Kernel kernel, ProcessControlBlock pcb, int[] msg, int startIn, int endEx) {
         // 接收参数为常数时，无需进行任何操作
         checkMsgLength(startIn, endEx);
     }

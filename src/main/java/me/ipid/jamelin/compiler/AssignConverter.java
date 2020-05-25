@@ -7,7 +7,7 @@ import me.ipid.jamelin.constant.PromelaLanguage.BinaryOp;
 import me.ipid.jamelin.entity.CompileTimeInfo;
 import me.ipid.jamelin.entity.il.*;
 import me.ipid.jamelin.entity.sa.SAPrimitiveType;
-import me.ipid.jamelin.entity.sa.SATypedSlot;
+import me.ipid.jamelin.entity.sa.SATypedMemLoc;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 import me.ipid.util.errors.Unreachable;
 
@@ -26,7 +26,7 @@ public final class AssignConverter {
     }
 
     private static List<ILStatement> buildAddition(CompileTimeInfo cInfo, AstAdditionStatement assign) {
-        SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, assign.target);
+        SATypedMemLoc slot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo, assign.target);
         ILExpr valueAfterAdd = new ILBinaryExpr(
                 slot.buildGetExpr(),
                 new ILConstExpr(assign.addBy),
@@ -38,20 +38,20 @@ public final class AssignConverter {
 
     private static List<ILStatement> buildSetValue(CompileTimeInfo cInfo, AstSetValueStatement assign) {
         ILExpr value = ExprConverter.buildExpr(cInfo, assign.value).requirePrimitive();
-        SATypedSlot slot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, assign.target);
+        SATypedMemLoc slot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo, assign.target);
 
         return genAssignStatements(slot, value);
     }
 
-    private static void checkPrimitiveSlot(SATypedSlot typedSlot) {
+    private static void checkPrimitiveMemLoc(SATypedMemLoc typedSlot) {
         if (!(typedSlot.type instanceof SAPrimitiveType)) {
             throw new SyntaxException("试图使用 " + typedSlot.type.getName() +
                     " 类型的表达式来赋值，但 Promela 只允许整数类型的表达式");
         }
     }
 
-    private static List<ILStatement> genAssignStatements(SATypedSlot slot, ILExpr value) {
-        checkPrimitiveSlot(slot);
+    private static List<ILStatement> genAssignStatements(SATypedMemLoc slot, ILExpr value) {
+        checkPrimitiveMemLoc(slot);
         var result = new ArrayList<ILStatement>();
         result.add(new ILSetMemStatement(slot.global, slot.combineOffset(), value));
         return result;

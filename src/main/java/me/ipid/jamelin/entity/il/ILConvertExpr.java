@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 import me.ipid.jamelin.util.NumberDowncaster;
 
@@ -34,7 +34,7 @@ public class ILConvertExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+    public int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         int value = expr.execute(kernel, procInfo, noSideEffect);
 
         if (signed) {

@@ -15,9 +15,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JamelinKernel {
+public class Kernel {
 
-    private static final Logger log = LogManager.getLogger(JamelinKernel.class);
+    private static final Logger log = LogManager.getLogger(Kernel.class);
     private static final int
             MAX_PID_INCLUSIVE = 254,
             MAX_CHAN_INCLUSIVE = 254;
@@ -30,7 +30,7 @@ public class JamelinKernel {
     private final List<KnlChan> chans;
     private boolean timeout;
 
-    public JamelinKernel(RuntimeInfo info) {
+    public Kernel(RuntimeInfo info) {
         this.info = info;
         this.globalMemory = new ArrayList<>(info.globalMemory);
 

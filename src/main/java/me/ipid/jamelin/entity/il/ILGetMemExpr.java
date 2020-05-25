@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILGetMemExpr implements ILExpr {
@@ -13,7 +13,7 @@ public class ILGetMemExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+    public int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         int offset = memOffset.execute(kernel, procInfo, noSideEffect);
 
         if (global) {

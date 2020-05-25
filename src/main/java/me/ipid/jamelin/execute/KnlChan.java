@@ -60,7 +60,7 @@ public class KnlChan {
     }
 
     public boolean receivable(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             List<ILRecvArgItem> args
     ) {
         if (msgs.isEmpty()) {
@@ -85,7 +85,7 @@ public class KnlChan {
     }
 
     public void receiveMessage(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             List<ILRecvArgItem> args, boolean peek
     ) {
         assert msgUnitsLen.size() == args.size();
@@ -106,7 +106,7 @@ public class KnlChan {
     }
 
     public void sendMessage(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             List<ILSendArgItem> sendArgs
     ) {
         assert msgUnitsLen.size() == sendArgs.size();

@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.KnlChan;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
@@ -19,7 +19,7 @@ public class ILChanPollExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+    public int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         int chanId = ilChanId.execute(kernel, procInfo, noSideEffect);
         KnlChan chan = kernel.getChannel(chanId);
 

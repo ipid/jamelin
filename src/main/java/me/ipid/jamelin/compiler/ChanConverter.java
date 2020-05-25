@@ -8,7 +8,7 @@ import me.ipid.jamelin.entity.sa.SAPrimitiveType;
 import me.ipid.jamelin.entity.sa.SATypeFactory;
 import me.ipid.jamelin.entity.sa.SATypeFactory.PrimitiveTypesLib;
 import me.ipid.jamelin.entity.sa.SATypedExpr;
-import me.ipid.jamelin.entity.sa.SATypedSlot;
+import me.ipid.jamelin.entity.sa.SATypedMemLoc;
 import me.ipid.jamelin.exception.CompileExceptions.NotSupportedException;
 import me.ipid.jamelin.exception.CompileExceptions.SyntaxException;
 import me.ipid.jamelin.util.Slot;
@@ -79,12 +79,12 @@ public class ChanConverter {
             // 由于非原始类型 VarRef 不能直接构造成表达式，因此必须特殊处理
             if (astExpr instanceof AstVarRefExpr) {
                 // 假设表达式是变量的引用
-                SATypedSlot typedSlot = VarRefConverter.buildTypedSlotOfVarRef(
+                SATypedMemLoc typedSlot = VarRefConverter.buildTypedMemLocOfVarRef(
                         cInfo, ((AstVarRefExpr) astExpr).vRef);
 
                 // 提取 type id 和 send arg
                 typeIds.add(typedSlot.type.getTypeId());
-                sendArgs.add(new ILRangeSendArg(VarRefConverter.buildRangeFromTypedSlot(typedSlot)));
+                sendArgs.add(new ILRangeSendArg(VarRefConverter.buildRangeFromTypedMemLoc(typedSlot)));
             } else {
                 // 假设表达式是运算的表达式
                 SATypedExpr typedExpr = ExprConverter.buildExpr(cInfo, astExpr);
@@ -112,7 +112,7 @@ public class ChanConverter {
     }
 
     private static ILExpr buildChanId(CompileTimeInfo cInfo, AstVarRef astChanId) {
-        SATypedSlot chanIdSlot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, astChanId);
+        SATypedMemLoc chanIdSlot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo, astChanId);
         if (!(chanIdSlot.type instanceof SAPrimitiveType)) {
             throw new SyntaxException("类型 " + chanIdSlot.type.getName() + " 不是原始类型，不能把它当作信道");
         }
@@ -148,11 +148,11 @@ public class ChanConverter {
         // 接收语句的 eval 允许使用非原始类型，因此需要特殊处理
         if (astArg.expr instanceof AstVarRefExpr) {
             AstVarRef vRef = ((AstVarRefExpr) astArg.expr).vRef;
-            SATypedSlot targetSlot = VarRefConverter.buildTypedSlotOfVarRef(cInfo, vRef);
+            SATypedMemLoc targetSlot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo, vRef);
 
             typeIds.add(targetSlot.type.getTypeId());
             recvArgs.add(new ILEvalRangeRecvArg(
-                    targetSlot.type.getSize(), VarRefConverter.buildRangeFromTypedSlot(targetSlot)
+                    targetSlot.type.getSize(), VarRefConverter.buildRangeFromTypedMemLoc(targetSlot)
             ));
         } else {
             SATypedExpr typedExpr = ExprConverter.buildExpr(cInfo, astArg.expr);
@@ -169,7 +169,7 @@ public class ChanConverter {
     ) {
         // 如果是形如 x.a.b 的 VarRef 接收参数
 
-        SATypedSlot targetSlot = VarRefConverter.buildTypedSlotOfVarRef(cInfo,
+        SATypedMemLoc targetSlot = VarRefConverter.buildTypedMemLocOfVarRef(cInfo,
                 arg.target);
 
         if (targetSlot.type instanceof SAPrimitiveType) {
@@ -186,7 +186,7 @@ public class ChanConverter {
             typeIds.add(PrimitiveTypesLib.int_t.getTypeId());
         } else {
             // 如果接收的目标变量类型不是原始类型，那就直接 memcpy（指使用 ILRange）
-            ILRange range = VarRefConverter.buildRangeFromTypedSlot(targetSlot);
+            ILRange range = VarRefConverter.buildRangeFromTypedMemLoc(targetSlot);
 
             // 收集 type id 和 recv arg
             recvArgs.add(new ILRangeRecvArg(targetSlot.type.getSize(), range));

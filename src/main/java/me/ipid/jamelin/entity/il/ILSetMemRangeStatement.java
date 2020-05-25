@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILSetMemRangeStatement implements ILStatement {
@@ -20,7 +20,7 @@ public class ILSetMemRangeStatement implements ILStatement {
     }
 
     @Override
-    public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public void execute(Kernel kernel, ProcessControlBlock procInfo) {
         int start = startInclusiveExpr.execute(kernel, procInfo, false),
                 end = endExclusiveExpr.execute(kernel, procInfo, false),
                 setTo = setToExpr.execute(kernel, procInfo, false);

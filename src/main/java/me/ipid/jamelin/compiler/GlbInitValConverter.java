@@ -37,7 +37,7 @@ public class GlbInitValConverter {
                 astInit
         ).when(AstChanInit.class, ast -> {
             // chan 初始化
-            throw new NotSupportedException("暂不支持 chan 初始化");
+            throw new SyntaxException("结构体定义中不能使用 chan 初始化");
 
         }).when(AstExprAsInit.class, ast -> {
             // 单个表达式初始化

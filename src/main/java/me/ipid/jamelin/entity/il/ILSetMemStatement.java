@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILSetMemStatement implements ILStatement {
@@ -15,7 +15,7 @@ public class ILSetMemStatement implements ILStatement {
     }
 
     @Override
-    public void execute(JamelinKernel kernel, ProcessControlBlock procInfo) {
+    public void execute(Kernel kernel, ProcessControlBlock procInfo) {
         int value = valueExpr.execute(kernel, procInfo, false),
                 offset = offsetExpr.execute(kernel, procInfo, false);
 

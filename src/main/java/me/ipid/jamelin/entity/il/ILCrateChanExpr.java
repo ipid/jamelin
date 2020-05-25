@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 import me.ipid.jamelin.util.Slot;
 
@@ -24,7 +24,7 @@ public class ILCrateChanExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+    public int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         if (noSideEffect) {
             return 1;
         }

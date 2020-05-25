@@ -1,7 +1,7 @@
 package me.ipid.jamelin.entity.il;
 
 import me.ipid.jamelin.constant.PromelaLanguage.BinaryOp;
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public class ILBinaryExpr implements ILExpr {
@@ -16,7 +16,7 @@ public class ILBinaryExpr implements ILExpr {
     }
 
     @Override
-    public int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
+    public int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect) {
         int l = left.execute(kernel, procInfo, noSideEffect);
         int r = right.execute(kernel, procInfo, noSideEffect);
 

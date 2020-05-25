@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class ILRangeSendArg implements ILSendArgItem {
     }
 
     @Override
-    public void fillValue(JamelinKernel kernel, ProcessControlBlock pcb, List<? super Integer> target) {
+    public void fillValue(Kernel kernel, ProcessControlBlock pcb, List<? super Integer> target) {
         var range = ilRange.execute(kernel, pcb);
 
         if (ilRange.global) {

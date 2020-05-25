@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 public interface ILExpr {
@@ -9,5 +9,5 @@ public interface ILExpr {
      *
      * @return 表达式的值，非 0 表示 true
      */
-    int execute(JamelinKernel kernel, ProcessControlBlock procInfo, boolean noSideEffect);
+    int execute(Kernel kernel, ProcessControlBlock procInfo, boolean noSideEffect);
 }

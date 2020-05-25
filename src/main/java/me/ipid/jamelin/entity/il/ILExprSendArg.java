@@ -1,6 +1,6 @@
 package me.ipid.jamelin.entity.il;
 
-import me.ipid.jamelin.execute.JamelinKernel;
+import me.ipid.jamelin.execute.Kernel;
 import me.ipid.jamelin.execute.ProcessControlBlock;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public class ILExprSendArg implements ILSendArgItem {
 
     @Override
     public void fillValue(
-            JamelinKernel kernel, ProcessControlBlock pcb,
+            Kernel kernel, ProcessControlBlock pcb,
             List<? super Integer> target
     ) {
         target.add(ilExpr.execute(kernel, pcb, false));
